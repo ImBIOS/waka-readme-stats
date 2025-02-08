@@ -22,7 +22,7 @@ jobs:
         run: pip install pipenv
 
       - name: Install Dependencies 📥
-        run: pipenv install
+        run: pipenv install --dev
 
       - name: Run Codestyle ✔️
         run: pipenv run flake8 --max-line-length=160 --exclude venv,assets . && pipenv run black --line-length=160 --check --diff --exclude='/venv/|/assets/' .
