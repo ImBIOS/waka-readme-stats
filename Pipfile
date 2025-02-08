@@ -9,6 +9,7 @@ humanize = "~=4.6"
 matplotlib = "~=3.7"
 numpy = "~=1.24"
 httpx = "~=0.23"
+pyyaml = "~=6.0"
 
 [dev-packages]
 black = "~=25.1"
