@@ -1,21 +1,29 @@
 """
 Readme Development Metrics With waka time progress
 """
+
 from asyncio import run
 from datetime import datetime
 from typing import Dict
 from urllib.parse import quote
 
-from humanize import intword, naturalsize, intcomma
-
-from manager_download import init_download_manager, DownloadManager as DM
+from graphics_chart_drawer import GRAPH_PATH, create_loc_graph
+from graphics_list_formatter import (
+    make_commit_day_time_list,
+    make_language_per_repo_list,
+    make_list,
+)
+from humanize import intcomma, intword, naturalsize
+from manager_debug import DebugManager as DBM
+from manager_debug import init_debug_manager
+from manager_download import DownloadManager as DM
+from manager_download import init_download_manager
 from manager_environment import EnvironmentManager as EM
-from manager_github import init_github_manager, GitHubManager as GHM
-from manager_file import init_localization_manager, FileManager as FM
-from manager_debug import init_debug_manager, DebugManager as DBM
-from graphics_chart_drawer import create_loc_graph, GRAPH_PATH
+from manager_file import FileManager as FM
+from manager_file import init_localization_manager
+from manager_github import GitHubManager as GHM
+from manager_github import init_github_manager
 from yearly_commit_calculator import calculate_commit_data
-from graphics_list_formatter import make_list, make_commit_day_time_list, make_language_per_repo_list
 
 
 async def get_waka_time_stats(repositories: Dict, commit_dates: Dict) -> str:
@@ -97,7 +105,10 @@ async def get_short_github_info() -> str:
         return stats
     DBM.i("Adding contributions info...")
     if len(data["years"]) > 0:
-        contributions = FM.t("Contributions in the year") % (intcomma(data["years"][0]["total"]), data["years"][0]["year"])
+        contributions = FM.t("Contributions in the year") % (
+            intcomma(data["years"][0]["total"]),
+            data["years"][0]["year"],
+        )
         stats += f"> 🏆 {contributions}\n > \n"
     else:
         DBM.p("GitHub contributions data unavailable!")

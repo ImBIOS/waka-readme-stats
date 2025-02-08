@@ -1,10 +1,9 @@
 from datetime import datetime
-from logging import getLogger, Logger, StreamHandler
+from logging import Logger, StreamHandler, getLogger
 from string import Template
 from typing import Dict
 
 from humanize import precisedelta
-
 from manager_environment import EnvironmentManager as EM
 
 
