@@ -20,7 +20,7 @@ os.environ["INPUT_SHOW_MASKED_TIME"] = "false"
 os.environ["INPUT_SYMBOL_VERSION"] = "1"
 
 # Now we can safely import the modules
-from manager_download import GITHUB_API_QUERIES, DownloadManager, init_download_manager
+from manager_download import DownloadManager, init_download_manager
 
 
 @pytest.fixture(autouse=True)
