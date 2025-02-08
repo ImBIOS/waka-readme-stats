@@ -41,7 +41,7 @@ jobs:
 
       - name: Install Dependencies 📥
         run: |
-          pipenv install
+          pipenv install --dev
 
       - name: Run Tests 🧪
         run: pipenv run pytest --cov --cov-report=lcov:coverage.lcov
