@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pygithub = "~=1.58"
+pygithub = "~=2.5"
 gitpython = "~=3.1"
 pytz = "~=2022.7"
 humanize = "~=4.6"
