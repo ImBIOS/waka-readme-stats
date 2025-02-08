@@ -37,7 +37,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y lcov
 
       - name: Install pipenv
-        run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
+        run: pip install pipenv
 
       - name: Install Dependencies 📥
         run: |
