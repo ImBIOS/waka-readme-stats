@@ -1,7 +1,17 @@
 name: CI
 
 on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**/coverage.svg"
+
   pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - "**/coverage.svg"
   workflow_dispatch:
 
 concurrency:
@@ -15,16 +25,53 @@ jobs:
 
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Python 3.11 🐍
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.11
-          cache: 'pip'
+          cache: "pipenv"
+
+      - name: Install lcov
+        run: sudo apt-get update && sudo apt-get install -y lcov
+
+      - name: Install pipenv
+        run: curl https://raw.githubusercontent.com/pypa/pipenv/master/get-pipenv.py | python
 
       - name: Install Dependencies 📥
-        run: pip install -r requirements.txt
+        run: |
+          pipenv install
+          pipenv shell
+
+      - name: Run Tests 🧪
+        run: pytest --cov --cov-report=lcov:coverage.lcov
+
+      - name: Coverage Badge
+        uses: ImBIOS/lcov-coverage-badge@v1
+        with:
+          file: ./coverage.lcov
+
+      - name: Verify Changed files
+        uses: tj-actions/verify-changed-files@v20
+        id: verify-changed-files
+        with:
+          files: "coverage.svg"
+
+      - name: Commit files
+        if: steps.verify-changed-files.outputs.files_changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add coverage.svg
+          git commit -m "Updated coverage.svg"
+
+      - name: Push changes
+        if: steps.verify-changed-files.outputs.files_changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.github_token }}
+          branch: ${{ github.ref }}
 
       - name: Create Assets Folder 📥
         run: mkdir assets

@@ -1,19 +1,19 @@
-name: 'Profile Readme Development Stats'
+name: "Profile Readme Development Stats"
 author: Anmol Pratap Singh
-description: 'Are you an early 🐤 or a night 🦉? When are you most productive during the day? Let''s check out in your readme!'
+description: "Are you an early 🐤 or a night 🦉? When are you most productive during the day? Let's check out in your readme!"
 
 inputs:
   GH_TOKEN:
-    description: 'GitHub access token with Repo scope'
+    description: "GitHub access token with Repo scope"
     required: true
     default: ${{ github.token }}
 
   WAKATIME_API_KEY:
-    description: 'Your Wakatime API Key'
+    description: "Your Wakatime API Key"
     required: true
 
   SECTION_NAME:
-    description: 'Name used in readme to scope the updated section'
+    description: "Name used in readme to scope the updated section"
     required: false
     default: "waka"
 
@@ -29,22 +29,22 @@ inputs:
 
   SHOW_OS:
     required: false
-    description: 'Show the list of OS Worked on In dev metrics'
+    description: "Show the list of OS Worked on In dev metrics"
     default: "True"
 
   SHOW_PROJECTS:
     required: false
-    description: 'Show the list of projects worked on in dev metrics'
+    description: "Show the list of projects worked on in dev metrics"
     default: "True"
 
   SHOW_EDITORS:
     required: false
-    description: 'Show the Editors used in dev metrics'
+    description: "Show the Editors used in dev metrics"
     default: "True"
 
   SHOW_TIMEZONE:
     required: false
-    description: 'Show the time zone in the dev metrics'
+    description: "Show the time zone in the dev metrics"
     default: "True"
 
   SHOW_COMMIT:
@@ -101,7 +101,7 @@ inputs:
     required: false
     description: "Git commit with your own name and email"
     default: "False"
-  
+
   COMMIT_MESSAGE:
     required: false
     description: "Git commit message"
@@ -111,7 +111,7 @@ inputs:
     required: false
     description: "Git commit custom username"
     default: ""
-  
+
   COMMIT_EMAIL:
     required: false
     description: "Git commit custom email"
@@ -148,9 +148,9 @@ inputs:
     default: ${{ runner.debug }}
 
 runs:
-  using: 'docker'
-  image: 'docker://wakareadmestats/waka-readme-stats:master'
+  using: "docker"
+  image: "./Dockerfile"
 
 branding:
-  icon: 'activity'
-  color: 'orange'
+  icon: "activity"
+  color: "orange"
