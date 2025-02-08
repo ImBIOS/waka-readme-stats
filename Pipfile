@@ -14,10 +14,10 @@ pyyaml = "~=6.0"
 [dev-packages]
 black = "~=25.1"
 flake8 = "~=6.0"
-pytest = "*"
-pytest-asyncio = "*"
-pytest-cov = "*"
-pytest-mock = "*"
+pytest = "~=8.3"
+pytest-asyncio = "~=0.25"
+pytest-cov = "~=6.0"
+pytest-mock = "~=3.14"
 
 [requires]
 python_version = "3.11"
