@@ -2,6 +2,9 @@
 
 # Dev Metrics in Readme with added feature flags 🎌
 
+![Test Coverage](./coverage.svg)
+![CI Status](https://github.com/ImBIOS/waka-readme-stats/actions/workflows/ci.yml/badge.svg)
+
 ![Project Preview](https://user-images.githubusercontent.com/25841814/79395484-5081ae80-7fac-11ea-9e27-ac91472e31dd.png)
 
 <p align="center">
