@@ -42,10 +42,9 @@ jobs:
       - name: Install Dependencies 📥
         run: |
           pipenv install
-          pipenv shell
 
       - name: Run Tests 🧪
-        run: pytest --cov --cov-report=lcov:coverage.lcov
+        run: pipenv run pytest --cov --cov-report=lcov:coverage.lcov
 
       - name: Coverage Badge
         uses: ImBIOS/lcov-coverage-badge@v1
@@ -104,7 +103,7 @@ jobs:
           INPUT_COMMIT_BY_ME: True
           INPUT_DEBUG_LOGGING: True # Not for prod
           DEBUG_RUN: True # Not for prod
-        run: python3 sources/main.py
+        run: pipenv run python3 sources/main.py
 
       - name: Save Branch Name Without Slashes 📛
         if: ${{ github.ref != 'refs/heads/master' }}

@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies 📥
         run: |
           pipenv install
-          echo "CODEQL_PYTHON=$(which python)" >> $GITHUB_ENV
+          pipenv run echo "CODEQL_PYTHON=$(which python)" >> $GITHUB_ENV
 
       - name: Initialize CodeQL 🧑‍💻
         uses: github/codeql-action/init@v2
