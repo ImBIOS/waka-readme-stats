@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import yaml
-from httpx import AsyncClient, Response
+from httpx import Response
 
 # Mock environment variables before importing the modules
 os.environ["INPUT_GH_TOKEN"] = "mock_gh_token"
