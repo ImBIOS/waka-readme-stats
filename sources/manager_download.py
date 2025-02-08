@@ -2,13 +2,12 @@ from asyncio import Task
 from hashlib import md5
 from json import dumps
 from string import Template
-from typing import Awaitable, Dict, Callable, Optional, List, Tuple
+from typing import Awaitable, Callable, Dict, List, Optional, Tuple
 
 from httpx import AsyncClient
-from yaml import safe_load
-
-from manager_environment import EnvironmentManager as EM
 from manager_debug import DebugManager as DBM
+from manager_environment import EnvironmentManager as EM
+from yaml import safe_load
 
 GITHUB_API_QUERIES = {
     # Query to collect info about all user repositories, including: is it a fork, name and owner login.
@@ -151,7 +150,9 @@ class DownloadManager:
         :param resources: Static queries, formatted like "IDENTIFIER"="URL".
         """
         for resource, url in resources.items():
-            DownloadManager._REMOTE_RESOURCES_CACHE[resource] = DownloadManager._client.get(url)
+            DownloadManager._REMOTE_RESOURCES_CACHE[resource] = (
+                DownloadManager._client.get(url)
+            )
 
     @staticmethod
     async def close_remote_resources():
@@ -166,7 +167,9 @@ class DownloadManager:
                 await resource
 
     @staticmethod
-    async def _get_remote_resource(resource: str, convertor: Optional[Callable[[bytes], Dict]]) -> Dict:
+    async def _get_remote_resource(
+        resource: str, convertor: Optional[Callable[[bytes], Dict]]
+    ) -> Dict or None:
         """
         Receive execution result of static query, wait for it if necessary.
         If the query wasn't cached previously, cache it.
@@ -174,7 +177,7 @@ class DownloadManager:
         :param resource: Static query identifier.
         :param convertor: Optional function to convert `response.contents` to dict.
             By default `response.json()` is used.
-        :return: Response dictionary.
+        :return: Response dictionary or None.
         """
         DBM.i(f"\tMaking a remote API query named '{resource}'...")
         if isinstance(DownloadManager._REMOTE_RESOURCES_CACHE[resource], Awaitable):
@@ -189,11 +192,19 @@ class DownloadManager:
                 return res.json()
             else:
                 return convertor(res.content)
+        elif res.status_code == 201:
+            DBM.w(f"\tQuery '{resource}' returned 201 status code")
+            return None
+        elif res.status_code == 202:
+            DBM.w(f"\tQuery '{resource}' returned 202 status code")
+            return None
         else:
-            raise Exception(f"Query '{res.url}' failed to run by returning code of {res.status_code}: {res.json()}")
+            raise Exception(
+                f"Query '{res.url}' failed to run by returning code of {res.status_code}: {res.json()}"
+            )
 
     @staticmethod
-    async def get_remote_json(resource: str) -> Dict:
+    async def get_remote_json(resource: str) -> Dict or None:
         """
         Shortcut for `_get_remote_resource` to return JSON response data.
         :param resource: Static query identifier.
@@ -202,7 +213,7 @@ class DownloadManager:
         return await DownloadManager._get_remote_resource(resource, None)
 
     @staticmethod
-    async def get_remote_yaml(resource: str) -> Dict:
+    async def get_remote_yaml(resource: str) -> Dict or None:
         """
         Shortcut for `_get_remote_resource` to return YAML response data.
         :param resource: Static query identifier.
@@ -211,7 +222,9 @@ class DownloadManager:
         return await DownloadManager._get_remote_resource(resource, safe_load)
 
     @staticmethod
-    async def _fetch_graphql_query(query: str, retries_count: int = 10, **kwargs) -> Dict:
+    async def _fetch_graphql_query(
+        query: str, retries_count: int = 10, **kwargs
+    ) -> Dict:
         """
         Execute GitHub GraphQL API simple query.
         :param query: Dynamic query identifier.
@@ -221,14 +234,20 @@ class DownloadManager:
         """
         headers = {"Authorization": f"Bearer {EM.GH_TOKEN}"}
         res = await DownloadManager._client.post(
-            "https://api.github.com/graphql", json={"query": Template(GITHUB_API_QUERIES[query]).substitute(kwargs)}, headers=headers
+            "https://api.github.com/graphql",
+            json={"query": Template(GITHUB_API_QUERIES[query]).substitute(kwargs)},
+            headers=headers,
         )
         if res.status_code == 200:
             return res.json()
         elif res.status_code == 502 and retries_count > 0:
-            return await DownloadManager._fetch_graphql_query(query, retries_count - 1, **kwargs)
+            return await DownloadManager._fetch_graphql_query(
+                query, retries_count - 1, **kwargs
+            )
         else:
-            raise Exception(f"Query '{query}' failed to run by returning code of {res.status_code}: {res.json()}")
+            raise Exception(
+                f"Query '{query}' failed to run by returning code of {res.status_code}: {res.json()}"
+            )
 
     @staticmethod
     def _find_pagination_and_data_list(response: Dict) -> Tuple[List, Dict]:
@@ -248,8 +267,12 @@ class DownloadManager:
         """
         if "nodes" in response.keys() and "pageInfo" in response.keys():
             return response["nodes"], response["pageInfo"]
-        elif len(response) == 1 and isinstance(response[list(response.keys())[0]], Dict):
-            return DownloadManager._find_pagination_and_data_list(response[list(response.keys())[0]])
+        elif len(response) == 1 and isinstance(
+            response[list(response.keys())[0]], Dict
+        ):
+            return DownloadManager._find_pagination_and_data_list(
+                response[list(response.keys())[0]]
+            )
         else:
             return list(), dict(hasNextPage=False)
 
@@ -264,16 +287,22 @@ class DownloadManager:
         :param kwargs: Parameters for substitution of variables in dynamic query.
         :return: Response JSON dictionary.
         """
-        initial_query_response = await DownloadManager._fetch_graphql_query(query, **kwargs, pagination="first: 100")
-        page_list, page_info = DownloadManager._find_pagination_and_data_list(initial_query_response)
+        initial_query_response = await DownloadManager._fetch_graphql_query(
+            query, **kwargs, pagination="first: 100"
+        )
+        page_list, page_info = DownloadManager._find_pagination_and_data_list(
+            initial_query_response
+        )
         while page_info["hasNextPage"]:
             pagination = f'first: 100, after: "{page_info["endCursor"]}"'
-            query_response = await DownloadManager._fetch_graphql_query(query, **kwargs, pagination=pagination)
-            new_page_list, page_info = DownloadManager._find_pagination_and_data_list(query_response)
+            query_response = await DownloadManager._fetch_graphql_query(
+                query, **kwargs, pagination=pagination
+            )
+            new_page_list, page_info = DownloadManager._find_pagination_and_data_list(
+                query_response
+            )
             page_list += new_page_list
-        _, page_info = DownloadManager._find_pagination_and_data_list(initial_query_response)
-        page_info.clear()
-        return initial_query_response
+        return page_list
 
     @staticmethod
     async def get_remote_graphql(query: str, **kwargs) -> Dict:
