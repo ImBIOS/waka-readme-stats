@@ -1,12 +1,10 @@
 from typing import Dict
 
-from numpy import arange, array, add, amax, zeros
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-
 from manager_download import DownloadManager as DM
 from manager_file import FileManager as FM
-
+from numpy import add, amax, arange, array, zeros
 
 MAX_LANGUAGES = 5  # Number of top languages to add to chart, for each year quarter
 GRAPH_PATH = f"{FM.ASSETS_DIR}/bar_graph.png"  # Chart saving path.
@@ -20,6 +18,15 @@ async def create_loc_graph(yearly_data: Dict, save_path: str):
     :param yearly_data: GitHub user yearly data.
     :param save_path: Path to save the graph file.
     """
+    # Handle empty data case
+    if not yearly_data:
+        fig = plt.figure()
+        ax = fig.add_axes([0, 0, 1.5, 1])
+        ax.set_ylabel("LOC added", fontdict=dict(weight="bold"))
+        plt.savefig(save_path, bbox_inches="tight")
+        plt.close(fig)
+        return
+
     colors = await DM.get_remote_yaml("linguist")
     if colors is None:
         colors = dict()
@@ -49,7 +56,10 @@ async def create_loc_graph(yearly_data: Dict, save_path: str):
     cumulative = zeros((years, 4, 2), dtype=int)
 
     for key, value in languages_all_loc.items():
-        color = colors[key].get("color", "tab:gray")
+        # Handle missing colors gracefully
+        color = "tab:gray"
+        if key in colors:
+            color = colors[key].get("color", "tab:gray")
         language_handles += [mpatches.Patch(color=color, label=key)]
 
         for quarter in range(4):
@@ -94,11 +104,12 @@ async def create_loc_graph(yearly_data: Dict, save_path: str):
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
 
-    max_offset = 0.05 * amax(cumulative.flatten())
-    joined = cumulative.reshape(-1, cumulative.shape[-1])
-    max_additions = amax(joined[:, 0])
-    max_deletions = amax(joined[:, 1])
-    plt.ylim(top=max_additions + max_offset, bottom=-max_deletions - max_offset)
+    if cumulative.size > 0:  # Only calculate limits if there's data
+        max_offset = 0.05 * amax(cumulative.flatten())
+        joined = cumulative.reshape(-1, cumulative.shape[-1])
+        max_additions = amax(joined[:, 0])
+        max_deletions = amax(joined[:, 1])
+        plt.ylim(top=max_additions + max_offset, bottom=-max_deletions - max_offset)
 
     plt.savefig(save_path, bbox_inches="tight")
     plt.close(fig)
