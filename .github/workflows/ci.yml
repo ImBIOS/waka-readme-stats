@@ -22,6 +22,9 @@ jobs:
   ci:
     name: Run Test and Review PR
     runs-on: ubuntu-latest
+    permissions: # Job-level permissions configuration starts here
+      contents: write # 'write' access to repository contents
+      pull-requests: write # 'write' access to pull requests
 
     steps:
       - name: Checkout 🛎️
@@ -57,8 +60,8 @@ jobs:
       - name: Commit files
         if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
-          git config --local user.email "imamuzzaki@gmail.com"
-          git config --local user.name "ImBIOS"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git add coverage.svg
           git commit -m "Updated coverage.svg"
 
@@ -67,7 +70,7 @@ jobs:
         uses: ad-m/github-push-action@master
         with:
           github_token: ${{ secrets.github_token }}
-          branch: ${{ github.ref }}
+          branch: ${{ github.head_ref }}
 
       - name: Create Assets Folder 📥
         run: mkdir assets
