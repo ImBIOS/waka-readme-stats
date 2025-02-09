@@ -37,36 +37,26 @@ class DebugManager:
     @staticmethod
     def _process_template(message: str, kwargs: Dict) -> str:
         if DebugManager._DATE_TEMPLATE in kwargs:
-            kwargs[DebugManager._DATE_TEMPLATE] = (
-                f"{datetime.strftime(kwargs[DebugManager._DATE_TEMPLATE], '%d-%m-%Y %H:%M:%S:%f')}"
-            )
+            kwargs[DebugManager._DATE_TEMPLATE] = f"{datetime.strftime(kwargs[DebugManager._DATE_TEMPLATE], '%d-%m-%Y %H:%M:%S:%f')}"
         if DebugManager._TIME_TEMPLATE in kwargs:
-            kwargs[DebugManager._TIME_TEMPLATE] = precisedelta(
-                kwargs[DebugManager._TIME_TEMPLATE], minimum_unit="microseconds"
-            )
+            kwargs[DebugManager._TIME_TEMPLATE] = precisedelta(kwargs[DebugManager._TIME_TEMPLATE], minimum_unit="microseconds")
 
         return Template(message).substitute(kwargs)
 
     @staticmethod
     def g(message: str, **kwargs):
         message = DebugManager._process_template(message, kwargs)
-        DebugManager._logger.info(
-            f"{DebugManager._COLOR_GREEN}{message}{DebugManager._COLOR_RESET}"
-        )
+        DebugManager._logger.info(f"{DebugManager._COLOR_GREEN}{message}{DebugManager._COLOR_RESET}")
 
     @staticmethod
     def i(message: str, **kwargs):
         message = DebugManager._process_template(message, kwargs)
-        DebugManager._logger.debug(
-            f"{DebugManager._COLOR_BLUE}{message}{DebugManager._COLOR_RESET}"
-        )
+        DebugManager._logger.debug(f"{DebugManager._COLOR_BLUE}{message}{DebugManager._COLOR_RESET}")
 
     @staticmethod
     def w(message: str, **kwargs):
         message = DebugManager._process_template(message, kwargs)
-        DebugManager._logger.warning(
-            f"{DebugManager._COLOR_YELLOW}{message}{DebugManager._COLOR_RESET}"
-        )
+        DebugManager._logger.warning(f"{DebugManager._COLOR_YELLOW}{message}{DebugManager._COLOR_RESET}")
 
     @staticmethod
     def p(message: str, **kwargs):

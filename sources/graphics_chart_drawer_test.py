@@ -85,9 +85,7 @@ def sample_colors():
 async def test_create_loc_graph_success(sample_yearly_data, sample_colors, tmp_path):
     test_save_path = str(tmp_path / "test_graph.png")
 
-    with patch(
-        "manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock
-    ) as mock_get_yaml:
+    with patch("manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock) as mock_get_yaml:
         mock_get_yaml.return_value = sample_colors
 
         await create_loc_graph(sample_yearly_data, test_save_path)
@@ -100,9 +98,7 @@ async def test_create_loc_graph_success(sample_yearly_data, sample_colors, tmp_p
 async def test_create_loc_graph_no_colors(sample_yearly_data, tmp_path):
     test_save_path = str(tmp_path / "test_graph_no_colors.png")
 
-    with patch(
-        "manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock
-    ) as mock_get_yaml:
+    with patch("manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock) as mock_get_yaml:
         mock_get_yaml.return_value = None
 
         await create_loc_graph(sample_yearly_data, test_save_path)
@@ -116,9 +112,7 @@ async def test_create_loc_graph_empty_data(tmp_path):
     test_save_path = str(tmp_path / "test_graph_empty.png")
     empty_data = {}
 
-    with patch(
-        "manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock
-    ) as mock_get_yaml:
+    with patch("manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock) as mock_get_yaml:
         mock_get_yaml.return_value = {}
 
         await create_loc_graph(empty_data, test_save_path)
@@ -139,9 +133,7 @@ async def test_create_loc_graph_single_language(tmp_path):
         }
     }
 
-    with patch(
-        "manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock
-    ) as mock_get_yaml:
+    with patch("manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock) as mock_get_yaml:
         mock_get_yaml.return_value = {"Python": {"color": "blue"}}
 
         await create_loc_graph(single_lang_data, test_save_path)
@@ -151,9 +143,7 @@ async def test_create_loc_graph_single_language(tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_create_loc_graph_max_languages(
-    sample_yearly_data, sample_colors, tmp_path
-):
+async def test_create_loc_graph_max_languages(sample_yearly_data, sample_colors, tmp_path):
     test_save_path = str(tmp_path / "test_graph_max.png")
 
     # Add more than MAX_LANGUAGES languages to test the limit
@@ -165,9 +155,7 @@ async def test_create_loc_graph_max_languages(
         }
     )
 
-    with patch(
-        "manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock
-    ) as mock_get_yaml:
+    with patch("manager_download.DownloadManager.get_remote_yaml", new_callable=AsyncMock) as mock_get_yaml:
         mock_get_yaml.return_value = sample_colors
 
         await create_loc_graph(sample_yearly_data, test_save_path)

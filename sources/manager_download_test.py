@@ -62,17 +62,13 @@ async def mock_client():
         client.post.return_value = AsyncMock(
             status_code=200,
             json=lambda: {"data": {}},
-            __aenter__=AsyncMock(
-                return_value=AsyncMock(status_code=200, json=lambda: {"data": {}})
-            ),
+            __aenter__=AsyncMock(return_value=AsyncMock(status_code=200, json=lambda: {"data": {}})),
             __aexit__=AsyncMock(),
         )
         client.get.return_value = AsyncMock(
             status_code=200,
             json=lambda: {"data": {}},
-            __aenter__=AsyncMock(
-                return_value=AsyncMock(status_code=200, json=lambda: {"data": {}})
-            ),
+            __aenter__=AsyncMock(return_value=AsyncMock(status_code=200, json=lambda: {"data": {}})),
             __aexit__=AsyncMock(),
         )
         mock.return_value = client
@@ -254,9 +250,7 @@ async def test_fetch_graphql_paginated(mock_client):
     mock_client.post.return_value = AsyncMock(status_code=200, json=lambda: first_page)
 
     # Act
-    result = await DownloadManager._fetch_graphql_paginated(
-        "repo_branch_list", owner="test_owner", name="test_repo"
-    )
+    result = await DownloadManager._fetch_graphql_paginated("repo_branch_list", owner="test_owner", name="test_repo")
 
     # Assert
     assert len(result) == 1
@@ -273,12 +267,8 @@ async def test_get_remote_graphql_cached(mock_client):
     mock_client.post.return_value = mock_response
 
     # Act
-    result1 = await DownloadManager.get_remote_graphql(
-        "repo_branch_list", owner="test_owner", name="test_repo"
-    )
-    result2 = await DownloadManager.get_remote_graphql(
-        "repo_branch_list", owner="test_owner", name="test_repo"
-    )
+    result1 = await DownloadManager.get_remote_graphql("repo_branch_list", owner="test_owner", name="test_repo")
+    result2 = await DownloadManager.get_remote_graphql("repo_branch_list", owner="test_owner", name="test_repo")
 
     # Assert
     assert result1 == result2
@@ -296,9 +286,7 @@ async def test_close_remote_resources():
     # Configure mock task
     mock_task.done.return_value = False
     mock_task.cancelled.return_value = False
-    mock_task.cancel = (
-        MagicMock()
-    )  # Use regular MagicMock instead of AsyncMock for cancel
+    mock_task.cancel = MagicMock()  # Use regular MagicMock instead of AsyncMock for cancel
 
     # Store original cache
     original_cache = DownloadManager._REMOTE_RESOURCES_CACHE.copy()
@@ -357,9 +345,7 @@ async def test_retry_on_502_error(mock_client):
     """Test retry behavior on 502 error"""
     # Arrange
     test_data = {"data": {"repository": {"name": "test-repo"}}}
-    mock_502_response = AsyncMock(
-        status_code=502, json=lambda: {"error": "Bad Gateway"}
-    )
+    mock_502_response = AsyncMock(status_code=502, json=lambda: {"error": "Bad Gateway"})
     mock_success_response = AsyncMock(status_code=200, json=lambda: test_data)
 
     mock_client.post.side_effect = [mock_502_response, mock_success_response]
@@ -375,9 +361,7 @@ async def test_retry_on_502_error(mock_client):
 
     # Assert
     assert result == test_data
-    assert (
-        mock_client.post.call_count == 2
-    )  # Should make two calls: one failed, one successful
+    assert mock_client.post.call_count == 2  # Should make two calls: one failed, one successful
 
 
 @pytest.mark.asyncio
