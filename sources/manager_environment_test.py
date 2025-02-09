@@ -29,8 +29,8 @@ def test_list_variable(env_manager):
     assert isinstance(env_manager.IGNORED_REPOS, list)
 
 
-def test_integer_variable(env_manager):
-    assert isinstance(env_manager.SYMBOL_VERSION, int)
+def test_string_variable(env_manager):
+    assert isinstance(env_manager.SYMBOL_VERSION, str)
 
 
 def test_debugging_variables(env_manager):

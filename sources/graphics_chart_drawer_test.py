@@ -3,8 +3,27 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
+# Mock environment variables before importing the modules
+os.environ["INPUT_GH_TOKEN"] = "mock_gh_token"
+os.environ["INPUT_WAKATIME_API_KEY"] = "mock_wakatime_key"
+
+
 # Import the function and constants we're testing
-from graphics_chart_drawer import GRAPH_PATH, MAX_LANGUAGES, create_loc_graph
+from graphics_chart_drawer import MAX_LANGUAGES  # noqa: E402
+from graphics_chart_drawer import GRAPH_PATH, create_loc_graph  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def mock_environment():
+    """Fixture to ensure environment variables are set for all tests"""
+    with patch.dict(
+        os.environ,
+        {
+            "INPUT_GH_TOKEN": "mock_gh_token",
+            "INPUT_WAKATIME_API_KEY": "mock_wakatime_key",
+        },
+    ):
+        yield
 
 
 @pytest.fixture
