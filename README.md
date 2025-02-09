@@ -279,7 +279,6 @@ However, if you are using this project and happy with it or just want to encoura
 
 - Giving proper credit when you use this action on your readme, linking back to it :D
 - Starring and sharing the project :rocket:
-- [![paypal.me/aapreneur](https://ionicabizau.github.io/badges/paypal.svg)](https://www.paypal.me/aapreneur) - You can make one-time donations via PayPal. I'll probably buy a ~~beer~~ wine 🍷
 
 Thanks! :heart:
 
