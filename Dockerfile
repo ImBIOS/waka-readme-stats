@@ -25,4 +25,4 @@ COPY sources/ ./sources/
 RUN git config --global user.name "readme-bot" && \
   git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-ENTRYPOINT ["python3", "sources/main.py"]
+ENTRYPOINT ["pipenv", "run", "python3", "sources/main.py"]
