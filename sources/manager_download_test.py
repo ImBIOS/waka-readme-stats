@@ -20,10 +20,10 @@ os.environ["INPUT_SHOW_TIME"] = "true"
 os.environ["INPUT_SHOW_MASKED_TIME"] = "false"
 os.environ["INPUT_SYMBOL_VERSION"] = "1"
 
-from manager_debug import DebugManager
+from manager_debug import DebugManager  # noqa: E402
 
 # Now we can safely import the modules
-from manager_download import DownloadManager, init_download_manager
+from manager_download import DownloadManager, init_download_manager  # noqa: E402
 
 # Initialize DebugManager logger
 DebugManager._logger = logging.getLogger("test")
@@ -99,32 +99,6 @@ def mock_environment():
         },
     ):
         yield
-
-
-@pytest_asyncio.fixture
-async def mock_client():
-    """Fixture to create a mock AsyncClient"""
-    with patch("manager_download.AsyncClient") as mock:
-        client = AsyncMock()
-        client.post.return_value = AsyncMock(
-            status_code=200,
-            json=lambda: {"data": {}},
-            __aenter__=AsyncMock(
-                return_value=AsyncMock(status_code=200, json=lambda: {"data": {}})
-            ),
-            __aexit__=AsyncMock(),
-        )
-        client.get.return_value = AsyncMock(
-            status_code=200,
-            json=lambda: {"data": {}},
-            __aenter__=AsyncMock(
-                return_value=AsyncMock(status_code=200, json=lambda: {"data": {}})
-            ),
-            __aexit__=AsyncMock(),
-        )
-        mock.return_value = client
-        DownloadManager._client = client
-        yield client
 
 
 @pytest.fixture

@@ -59,7 +59,9 @@ class FileManager:
             file.write(content)
 
     @staticmethod
-    def cache_binary(name: str, content: Optional[Any] = None, assets: bool = False) -> Optional[Any]:
+    def cache_binary(
+        name: str, content: Optional[Any] = None, assets: bool = False
+    ) -> Optional[Any]:
         """
         Save binary output file if provided or read if content is None.
 

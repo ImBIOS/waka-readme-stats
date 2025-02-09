@@ -42,11 +42,19 @@ async def get_waka_time_stats(repositories: Dict, commit_dates: Dict) -> str:
     if data is None:
         DBM.p("WakaTime data unavailable!")
         return stats
-    if EM.SHOW_COMMIT or EM.SHOW_DAYS_OF_WEEK:  # if any on flag is turned on then we need to calculate the data and print accordingly
+    if (
+        EM.SHOW_COMMIT or EM.SHOW_DAYS_OF_WEEK
+    ):  # if any on flag is turned on then we need to calculate the data and print accordingly
         DBM.i("Adding user commit day time info...")
         stats += f"{await make_commit_day_time_list(data['data']['timezone'], repositories, commit_dates)}\n\n"
 
-    if EM.SHOW_TIMEZONE or EM.SHOW_LANGUAGE or EM.SHOW_EDITORS or EM.SHOW_PROJECTS or EM.SHOW_OS:
+    if (
+        EM.SHOW_TIMEZONE
+        or EM.SHOW_LANGUAGE
+        or EM.SHOW_EDITORS
+        or EM.SHOW_PROJECTS
+        or EM.SHOW_OS
+    ):
         no_activity = FM.t("No Activity Tracked This Week")
         stats += f"📊 **{FM.t('This Week I Spend My Time On')}** \n\n```text\n"
 
@@ -57,22 +65,38 @@ async def get_waka_time_stats(repositories: Dict, commit_dates: Dict) -> str:
 
         if EM.SHOW_LANGUAGE:
             DBM.i("Adding user top languages info...")
-            lang_list = no_activity if len(data["data"]["languages"]) == 0 else make_list(data["data"]["languages"])
+            lang_list = (
+                no_activity
+                if len(data["data"]["languages"]) == 0
+                else make_list(data["data"]["languages"])
+            )
             stats += f"💬 {FM.t('Languages')}: \n{lang_list}\n\n"
 
         if EM.SHOW_EDITORS:
             DBM.i("Adding user editors info...")
-            edit_list = no_activity if len(data["data"]["editors"]) == 0 else make_list(data["data"]["editors"])
+            edit_list = (
+                no_activity
+                if len(data["data"]["editors"]) == 0
+                else make_list(data["data"]["editors"])
+            )
             stats += f"🔥 {FM.t('Editors')}: \n{edit_list}\n\n"
 
         if EM.SHOW_PROJECTS:
             DBM.i("Adding user projects info...")
-            project_list = no_activity if len(data["data"]["projects"]) == 0 else make_list(data["data"]["projects"])
+            project_list = (
+                no_activity
+                if len(data["data"]["projects"]) == 0
+                else make_list(data["data"]["projects"])
+            )
             stats += f"🐱‍💻 {FM.t('Projects')}: \n{project_list}\n\n"
 
         if EM.SHOW_OS:
             DBM.i("Adding user operating systems info...")
-            os_list = no_activity if len(data["data"]["operating_systems"]) == 0 else make_list(data["data"]["operating_systems"])
+            os_list = (
+                no_activity
+                if len(data["data"]["operating_systems"]) == 0
+                else make_list(data["data"]["operating_systems"])
+            )
             stats += f"💻 {FM.t('operating system')}: \n{os_list}\n\n"
 
         stats = f"{stats[:-1]}```\n\n"
@@ -128,7 +152,9 @@ async def get_short_github_info() -> str:
         stats += f"> 📜 {FM.t('public repository') % public_repo} \n > \n"
 
     DBM.i("Adding private repositories info...")
-    private_repo = GHM.USER.owned_private_repos if GHM.USER.owned_private_repos is not None else 0
+    private_repo = (
+        GHM.USER.owned_private_repos if GHM.USER.owned_private_repos is not None else 0
+    )
     if public_repo != 1:
         stats += f"> 🔑 {FM.t('private repositories') % private_repo} \n > \n"
     else:
@@ -145,13 +171,21 @@ async def collect_user_repositories() -> Dict:
     :returns: Complete list of user repositories.
     """
     DBM.i("Getting user repositories list...")
-    repositories = await DM.get_remote_graphql("user_repository_list", username=GHM.USER.login, id=GHM.USER.node_id)
+    repositories = await DM.get_remote_graphql(
+        "user_repository_list", username=GHM.USER.login, id=GHM.USER.node_id
+    )
     repo_names = [repo["name"] for repo in repositories]
     DBM.g("\tUser repository list collected!")
 
-    contributed = await DM.get_remote_graphql("repos_contributed_to", username=GHM.USER.login)
+    contributed = await DM.get_remote_graphql(
+        "repos_contributed_to", username=GHM.USER.login
+    )
 
-    contributed_nodes = [repo for repo in contributed if repo is not None and repo["name"] not in repo_names and not repo["isFork"]]
+    contributed_nodes = [
+        repo
+        for repo in contributed
+        if repo is not None and repo["name"] not in repo_names and not repo["isFork"]
+    ]
     DBM.g("\tUser contributed to repository list collected!")
 
     return repositories + contributed_nodes
@@ -169,7 +203,12 @@ async def get_stats() -> str:
     stats = str()
     repositories = await collect_user_repositories()
 
-    if EM.SHOW_LINES_OF_CODE or EM.SHOW_LOC_CHART or EM.SHOW_COMMIT or EM.SHOW_DAYS_OF_WEEK:  # calculate commit data if any one of these is enabled
+    if (
+        EM.SHOW_LINES_OF_CODE
+        or EM.SHOW_LOC_CHART
+        or EM.SHOW_COMMIT
+        or EM.SHOW_DAYS_OF_WEEK
+    ):  # calculate commit data if any one of these is enabled
         yearly_data, commit_data = await calculate_commit_data(repositories)
     else:
         yearly_data, commit_data = dict(), dict()
@@ -190,7 +229,14 @@ async def get_stats() -> str:
 
     if EM.SHOW_LINES_OF_CODE:
         DBM.i("Adding lines of code info...")
-        total_loc = sum([yearly_data[y][q][d]["add"] for y in yearly_data.keys() for q in yearly_data[y].keys() for d in yearly_data[y][q].keys()])
+        total_loc = sum(
+            [
+                yearly_data[y][q][d]["add"]
+                for y in yearly_data.keys()
+                for q in yearly_data[y].keys()
+                for d in yearly_data[y][q].keys()
+            ]
+        )
         data = f"{intword(total_loc)} {FM.t('Lines of code')}"
         stats += f"![Lines of code](https://img.shields.io/badge/{quote(FM.t('From Hello World I have written'))}-{quote(data)}-blue)\n\n"
 
@@ -205,11 +251,15 @@ async def get_stats() -> str:
 
     if EM.SHOW_LOC_CHART:
         await create_loc_graph(yearly_data, GRAPH_PATH)
-        stats += f"**{FM.t('Timeline')}**\n\n{GHM.update_chart('Lines of Code', GRAPH_PATH)}"
+        stats += (
+            f"**{FM.t('Timeline')}**\n\n{GHM.update_chart('Lines of Code', GRAPH_PATH)}"
+        )
 
     if EM.SHOW_UPDATED_DATE:
         DBM.i("Adding last updated time...")
-        stats += f"\n Last Updated on {datetime.now().strftime(EM.UPDATED_DATE_FORMAT)} UTC"
+        stats += (
+            f"\n Last Updated on {datetime.now().strftime(EM.UPDATED_DATE_FORMAT)} UTC"
+        )
 
     DBM.g("Stats for README collected!")
     return stats

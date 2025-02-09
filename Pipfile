@@ -18,6 +18,7 @@ pytest = "~=8.3"
 pytest-asyncio = "~=0.25"
 pytest-cov = "~=6.0"
 pytest-mock = "~=3.14"
+pre-commit = "*"
 
 [requires]
 python_version = "3.11"
