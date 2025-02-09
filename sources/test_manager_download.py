@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 import pytest_asyncio
@@ -188,6 +188,9 @@ async def test_load_remote_resources(mock_client):
 
     finally:
         # Clean up
+        for resource in DownloadManager._REMOTE_RESOURCES_CACHE.values():
+            if asyncio.iscoroutine(resource):
+                await resource
         DownloadManager._REMOTE_RESOURCES_CACHE.clear()
 
 
@@ -314,14 +317,14 @@ async def test_close_remote_resources():
     # Arrange
     mock_task = AsyncMock(spec=asyncio.Task)
     mock_awaitable = AsyncMock()
-    mock_awaitable.__await__ = AsyncMock(
-        return_value=iter([None])
-    )  # Make it properly awaitable
+    mock_awaitable.__await__ = AsyncMock(return_value=iter([None]))
 
     # Configure mock task
     mock_task.done.return_value = False
     mock_task.cancelled.return_value = False
-    mock_task.cancel = AsyncMock()
+    mock_task.cancel = (
+        MagicMock()
+    )  # Use regular MagicMock instead of AsyncMock for cancel
 
     # Store original cache
     original_cache = DownloadManager._REMOTE_RESOURCES_CACHE.copy()
@@ -338,7 +341,6 @@ async def test_close_remote_resources():
 
         # Assert
         mock_task.cancel.assert_called_once()
-        # No need to await mock_awaitable as it's handled in close_remote_resources
 
     finally:
         # Restore original cache
