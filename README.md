@@ -2,9 +2,6 @@
 
 # Dev Metrics in Readme with added feature flags 🎌
 
-![Test Coverage](./coverage.svg)
-![CI Status](https://github.com/ImBIOS/waka-readme-stats/actions/workflows/ci.yml/badge.svg)
-
 ![Project Preview](https://user-images.githubusercontent.com/25841814/79395484-5081ae80-7fac-11ea-9e27-ac91472e31dd.png)
 
 <p align="center">
@@ -22,6 +19,8 @@
    <img src="https://img.shields.io/github/stars/ImBIOS/waka-readme-stats"/>
    <img src="https://img.shields.io/github/forks/ImBIOS/waka-readme-stats"/>
    <img src="https://img.shields.io/static/v1?label=%F0%9F%8C%9F&message=If%20Useful&style=style=flat&color=BC4E99" alt="Star Badge"/>
+  ![Test Coverage](./coverage.svg)
+![CI Status](https://github.com/ImBIOS/waka-readme-stats/actions/workflows/ci.yml/badge.svg)
 </p>
 <p align="center">
    Are you an early 🐤 or a night 🦉?
