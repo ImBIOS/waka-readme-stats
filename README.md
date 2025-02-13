@@ -2,9 +2,6 @@
 
 # Dev Metrics in Readme with added feature flags 🎌
 
-![Test Coverage](./coverage.svg)
-![CI Status](https://github.com/ImBIOS/waka-readme-stats/actions/workflows/ci.yml/badge.svg)
-
 ![Project Preview](https://user-images.githubusercontent.com/25841814/79395484-5081ae80-7fac-11ea-9e27-ac91472e31dd.png)
 
 <p align="center">
@@ -22,7 +19,10 @@
    <img src="https://img.shields.io/github/stars/ImBIOS/waka-readme-stats"/>
    <img src="https://img.shields.io/github/forks/ImBIOS/waka-readme-stats"/>
    <img src="https://img.shields.io/static/v1?label=%F0%9F%8C%9F&message=If%20Useful&style=style=flat&color=BC4E99" alt="Star Badge"/>
+   <img src="/ImBIOS/waka-readme-stats/raw/master/coverage.svg" alt="Test Coverage"/>
+   <img src="https://github.com/ImBIOS/waka-readme-stats/actions/workflows/ci.yml/badge.svg" alt="CI Status"/>
 </p>
+
 <p align="center">
    Are you an early 🐤 or a night 🦉?
    <br/>
@@ -279,7 +279,6 @@ However, if you are using this project and happy with it or just want to encoura
 
 - Giving proper credit when you use this action on your readme, linking back to it :D
 - Starring and sharing the project :rocket:
-- [![paypal.me/aapreneur](https://ionicabizau.github.io/badges/paypal.svg)](https://www.paypal.me/aapreneur) - You can make one-time donations via PayPal. I'll probably buy a ~~beer~~ wine 🍷
 
 Thanks! :heart:
 
