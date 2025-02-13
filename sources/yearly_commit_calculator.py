@@ -1,14 +1,14 @@
 from asyncio import sleep
+from datetime import datetime
 from json import dumps
 from re import search
-from datetime import datetime
 from typing import Dict, Tuple
 
+from manager_debug import DebugManager as DBM
 from manager_download import DownloadManager as DM
 from manager_environment import EnvironmentManager as EM
-from manager_github import GitHubManager as GHM
 from manager_file import FileManager as FM
-from manager_debug import DebugManager as DBM
+from manager_github import GitHubManager as GHM
 
 
 async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
@@ -56,7 +56,7 @@ async def update_data_with_commit_stats(repo_details: Dict, yearly_data: Dict, d
     owner = repo_details["owner"]["login"]
     branch_data = await DM.get_remote_graphql("repo_branch_list", owner=owner, name=repo_details["name"])
     if len(branch_data) == 0:
-        DBM.w("\t\tSkipping repo.")
+        DBM.w("\t\tBranch data not found, skipping repository...")
         return
 
     for branch in branch_data:

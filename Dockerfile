@@ -15,8 +15,10 @@ WORKDIR /waka-readme-stats
 COPY Pipfile Pipfile.lock ./
 
 # Install pipenv and dependencies into the system environment
+# RUN pip install pipenv && \
+#   pipenv install --deploy --system
 RUN pip install pipenv && \
-  pipenv install --deploy --system
+  pipenv install --dev
 
 # Copy the source code
 COPY sources/ ./sources/
