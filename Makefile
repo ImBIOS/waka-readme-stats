@@ -2,7 +2,7 @@
 .DEFAULT_GOAL = help
 .EXPORT_ALL_VARIABLES:
 
-ENV = .env.example
+ENV = .env
 include $(ENV)
 
 help:
