@@ -1,11 +1,12 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - master
-    paths-ignore:
-      - "**/coverage.svg"
+# TODO: Make separate CI for direct push to master and PRs
+#  push:
+#    branches:
+#      - master
+#    paths-ignore:
+#      - "**/coverage.svg"
 
   pull_request_target:
     branches:
