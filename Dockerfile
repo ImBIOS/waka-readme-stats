@@ -15,10 +15,8 @@ WORKDIR /waka-readme-stats
 COPY Pipfile Pipfile.lock ./
 
 # Install pipenv and dependencies into the system environment
-# RUN pip install pipenv && \
-#   pipenv install --deploy --system
 RUN pip install pipenv && \
-  pipenv install
+  pipenv install --deploy --system
 
 # Copy the source code
 COPY sources/ ./sources/
@@ -27,4 +25,4 @@ COPY sources/ ./sources/
 RUN git config --global user.name "readme-bot" && \
   git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-ENTRYPOINT ["pipenv", "run", "python3", "sources/main.py"]
+ENTRYPOINT ["python3", "sources/main.py"]
