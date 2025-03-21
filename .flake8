@@ -1,0 +1,8 @@
+[flake8]
+max-line-length = 160
+exclude = venv,assets,.git,.github,__pycache__,.cache
+per-file-ignores =
+    # imported but unused in __init__ files
+    __init__.py: F401
+    # allow long lines in test files
+    *_test.py: E501

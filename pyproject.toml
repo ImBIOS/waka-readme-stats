@@ -1,0 +1,11 @@
+[tool.black]
+line-length = 160
+target-version = ['py38']
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | assets
+)/
+'''
