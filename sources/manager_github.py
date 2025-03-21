@@ -12,6 +12,18 @@ from github import Github, AuthenticatedUser, Repository
 from manager_environment import EnvironmentManager as EM
 from manager_file import FileManager as FM
 from manager_debug import DebugManager as DBM
+from manager_cache import CacheManager
+
+# For benchmarking
+try:
+    from benchmarking import benchmark
+except ImportError:
+    # Define a no-op benchmark decorator if benchmarking not available
+    def benchmark(name=None, metadata=None):
+        def decorator(func):
+            return func
+
+        return decorator
 
 
 def init_github_manager():
@@ -27,9 +39,10 @@ class GitHubManager:
     USER: AuthenticatedUser
     REPO: Repo
     REMOTE: Repository
+    CACHE: CacheManager = None
 
     _REMOTE_NAME: str
-    _REMOTE_PATH: str
+    _REPO_PATH: str
     _SINGLE_COMMIT_BRANCH = "latest_branch"
 
     _START_COMMENT = f"<!--START_SECTION:{EM.SECTION_NAME}-->"
@@ -49,15 +62,26 @@ class GitHubManager:
         GitHubManager.USER = github.get_user()
         rmtree(clone_path, ignore_errors=True)
 
-        GitHubManager._REMOTE_NAME = f"{GitHubManager.USER.login}/{GitHubManager.USER.login}"
-        GitHubManager._REPO_PATH = f"https://{EM.GH_TOKEN}@github.com/{GitHubManager._REMOTE_NAME}.git"
+        GitHubManager._REMOTE_NAME = (
+            f"{GitHubManager.USER.login}/{GitHubManager.USER.login}"
+        )
+        # URL for repository with authentication token
+        git_url = f"https://{EM.GH_TOKEN}@github.com/{GitHubManager._REMOTE_NAME}.git"
+        GitHubManager._REPO_PATH = git_url
 
         GitHubManager.REMOTE = github.get_repo(GitHubManager._REMOTE_NAME)
-        GitHubManager.REPO = Repo.clone_from(GitHubManager._REPO_PATH, to_path=clone_path)
+        GitHubManager.REPO = Repo.clone_from(
+            GitHubManager._REPO_PATH, to_path=clone_path
+        )
+
+        # Initialize cache with user login
+        GitHubManager.CACHE = CacheManager(GitHubManager.USER.login)
 
         if EM.COMMIT_SINGLE:
             GitHubManager.REPO.git.checkout(GitHubManager.branch(EM.PULL_BRANCH_NAME))
-            GitHubManager.REPO.git.checkout("--orphan", GitHubManager._SINGLE_COMMIT_BRANCH)
+            GitHubManager.REPO.git.checkout(
+                "--orphan", GitHubManager._SINGLE_COMMIT_BRANCH
+            )
         else:
             GitHubManager.REPO.git.checkout(GitHubManager.branch(EM.PUSH_BRANCH_NAME))
 
@@ -77,25 +101,31 @@ class GitHubManager:
         else:
             return Actor(
                 EM.COMMIT_USERNAME or "readme-bot",
-                EM.COMMIT_EMAIL or "41898282+github-actions[bot]@users.noreply.github.com",
+                EM.COMMIT_EMAIL
+                or "41898282+github-actions[bot]@users.noreply.github.com",
             )
 
     @staticmethod
     def branch(requested_branch: str) -> str:
         """
-        Gets requested branch name or the default branch name if requested branch wasn't found.
-        The default branch name is regularly, 'main' or 'master'.
+        Gets requested branch name or the default branch name if requested branch
+        wasn't found. The default branch name is regularly, 'main' or 'master'.
 
         :param requested_branch: Requested branch name.
         :returns: Commit author.
         """
-        return GitHubManager.REMOTE.default_branch if requested_branch == "" else requested_branch
+        return (
+            GitHubManager.REMOTE.default_branch
+            if requested_branch == ""
+            else requested_branch
+        )
 
     @staticmethod
     def _copy_file_and_add_to_repo(src_path: str):
         """
         Copies file to repository folder, creating path if needed and adds file to git.
-        The copied file relative to repository root path will be equal the source file relative to work directory path.
+        The copied file relative to repository root path will be equal the source file
+        relative to work directory path.
 
         :param src_path: Source file path.
         """
@@ -108,14 +138,23 @@ class GitHubManager:
     def update_readme(stats: str):
         """
         Updates readme with given data if necessary.
-        Uses commit author, commit message and branch name specified by environmental variables.
+        Uses commit author, commit message and branch name specified by
+        environmental variables.
         """
         DBM.i("Updating README...")
-        readme_path = join(GitHubManager.REPO.working_tree_dir, GitHubManager.REMOTE.get_readme().path)
+        readme_path = join(
+            GitHubManager.REPO.working_tree_dir, GitHubManager.REMOTE.get_readme().path
+        )
 
         with open(readme_path, "r") as readme_file:
             readme_contents = readme_file.read()
-        readme_stats = f"{GitHubManager._START_COMMENT}\n{stats}\n{GitHubManager._END_COMMENT}"
+
+        # Create formatted stats section with comments
+        readme_stats = (
+            f"{GitHubManager._START_COMMENT}\n{stats}\n{GitHubManager._END_COMMENT}"
+        )
+
+        # Replace old stats section with new one
         new_readme = sub(GitHubManager._README_REGEX, readme_stats, readme_contents)
 
         with open(readme_path, "w") as readme_file:
@@ -129,7 +168,8 @@ class GitHubManager:
         """
         Updates a chart.
         Inlines data into readme if in debug mode, commits otherwise.
-        Uses commit author, commit message and branch name specified by environmental variables.
+        Uses commit author, commit message and branch name specified by
+        environmental variables.
 
         :param name: Name of the chart to update.
         :param path: Path of the chart to update.
@@ -140,14 +180,27 @@ class GitHubManager:
         if not EM.DEBUG_RUN:
             DBM.i("\tAdding chart to repo...")
             GitHubManager._copy_file_and_add_to_repo(path)
-            chart_path = f"https://raw.githubusercontent.com/{GitHubManager._REMOTE_NAME}/{GitHubManager.branch(EM.PUSH_BRANCH_NAME)}/{path}"
-            output += f"![{name} chart]({chart_path})\n\n"
 
+            # Create URL for the raw chart image
+            branch = GitHubManager.branch(EM.PUSH_BRANCH_NAME)
+            chart_path = (
+                f"https://raw.githubusercontent.com/"
+                f"{GitHubManager._REMOTE_NAME}/{branch}/{path}"
+            )
+
+            output += f"![{name} chart]({chart_path})\n\n"
         else:
             DBM.i("\tInlining chart...")
-            hint = "You can use [this website](https://codebeautify.org/base64-to-image-converter) to view the generated base64 image."
+            hint = (
+                "You can use [this website]"
+                "(https://codebeautify.org/base64-to-image-converter) "
+                "to view the generated base64 image."
+            )
+
             with open(path, "rb") as input_file:
-                output += f"{hint}\n```\ndata:image/png;base64,{b64encode(input_file.read()).decode('utf-8')}\n```\n\n"
+                img_data = b64encode(input_file.read()).decode("utf-8")
+                output += f"{hint}\n```\ndata:image/png;base64,{img_data}\n```\n\n"
+
         return output
 
     @staticmethod
@@ -157,12 +210,20 @@ class GitHubManager:
         """
         actor = GitHubManager._get_author()
         DBM.i("Committing files to repo...")
-        GitHubManager.REPO.index.commit(EM.COMMIT_MESSAGE, author=actor, committer=actor)
+        GitHubManager.REPO.index.commit(
+            EM.COMMIT_MESSAGE, author=actor, committer=actor
+        )
 
         if EM.COMMIT_SINGLE:
             DBM.i("Pushing files to repo as a single commit...")
-            refspec = f"{GitHubManager._SINGLE_COMMIT_BRANCH}:{GitHubManager.branch(EM.PUSH_BRANCH_NAME)}"
-            headers = GitHubManager.REPO.remotes.origin.push(force=True, refspec=refspec)
+            refspec = (
+                f"{GitHubManager._SINGLE_COMMIT_BRANCH}:"
+                f"{GitHubManager.branch(EM.PUSH_BRANCH_NAME)}"
+            )
+
+            headers = GitHubManager.REPO.remotes.origin.push(
+                force=True, refspec=refspec
+            )
         else:
             DBM.i("Pushing files to repo...")
             headers = GitHubManager.REPO.remotes.origin.push()
@@ -184,7 +245,10 @@ class GitHubManager:
             DBM.p("Not in GitHub environment, not setting action output!")
             return
         else:
-            DBM.i("Outputting readme contents, check the latest comment for the generated stats.")
+            DBM.i(
+                "Outputting readme contents, check the latest comment "
+                "for the generated stats."
+            )
 
         prefix = "README stats current output:"
         eol = "".join(choice(ascii_letters) for _ in range(10))
@@ -195,3 +259,44 @@ class GitHubManager:
         )
 
         DBM.g("Action output set!")
+
+    @staticmethod
+    @benchmark(name="Get Repository Data", metadata={"operation": "github_api"})
+    def get_repository_data(repo_name: str):
+        """
+        Get repository data with caching support.
+
+        Checks if repository data is in cache first, otherwise fetches from GitHub API.
+
+        Args:
+            repo_name: The name of the repository to get data for
+
+        Returns:
+            Repository data
+        """
+        # Check if we have a cache instance
+        if GitHubManager.CACHE is None:
+            GitHubManager.CACHE = CacheManager(GitHubManager.USER.login)
+
+        # Try to get data from cache first
+        cached_data = GitHubManager.CACHE.get_cached_data(repo_name)
+        if cached_data is not None:
+            DBM.i(f"Using cached data for repository: {repo_name}")
+            return cached_data
+
+        # If not in cache, fetch from GitHub API
+        DBM.i(f"Fetching fresh data for repository: {repo_name}")
+        try:
+            github = Github(EM.GH_TOKEN)
+            repo_data = github.get_repo(
+                f"{GitHubManager.USER.login}/{repo_name}"
+            ).raw_data
+
+            # Update cache with new data
+            GitHubManager.CACHE.update_cache(repo_name, repo_data)
+
+            return repo_data
+        except Exception as e:
+            # DBM.e is not defined, using DBM.i instead for error reporting
+            DBM.i(f"Error fetching repository data for {repo_name}: {str(e)}")
+            return None

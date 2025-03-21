@@ -28,4 +28,4 @@ pytest-mock = "~=3.14"
 pre-commit = "*"
 
 [requires]
-python_version = "3.11"
+python_version = "3.13"

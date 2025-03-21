@@ -1,4 +1,4 @@
-> Looking For Translation to different languages & Locale  [#23](https://github.com/ImBIOS/waka-readme-stats/issues/23)
+> Looking For Translation to different languages & Locale [#23](https://github.com/ImBIOS/waka-readme-stats/issues/23)
 
 # Dev Metrics in Readme with added feature flags 🎌
 
@@ -6,12 +6,12 @@
 
 <p align="center">
 
-  ![Project Preview](https://user-images.githubusercontent.com/15426564/88030180-8e1c4780-cb58-11ea-8a8b-b3576dd73652.png)
+![Project Preview](https://user-images.githubusercontent.com/15426564/88030180-8e1c4780-cb58-11ea-8a8b-b3576dd73652.png)
 
   <h3 align="center">📌✨Awesome Readme Stats</h3>
 </p>
 
-----
+---
 
 <p align="center">
    <img src="https://img.shields.io/badge/language-python-blue?style"/>
@@ -43,14 +43,14 @@
 
 1. You need to update the markdown file(.md) with 2 comments. You can refer [here](#update-your-readme) for updating it.
 2. You'll need a WakaTime API Key. You can get that from your WakaTime Account Settings
-    - You can refer [here](#new-to-wakatime), if you're new to WakaTime
+   - You can refer [here](#new-to-wakatime), if you're new to WakaTime
 3. You'll need a GitHub API Token with `repo` and `user` scope from [here](https://github.com/settings/tokens) if you're running the action to get commit metrics
    > enabling the `repo` scope seems **DANGEROUS**<br/>
    > but this GitHub Action only accesses your commit timestamp and lines of code added or deleted in repository you contributed.
    - You can use [this](#profile-repository) example to work it out
 4. You need to save the WakaTime API Key and the GitHub API Token in the repository secrets. You can find that in the Settings of your repository. Be sure to save those as the following.
-    - WakaTime API Key as `WAKATIME_API_KEY=<your wakatime API Key>`
-    - GitHub Personal Access Token as `GH_TOKEN=<your github access token>`
+   - WakaTime API Key as `WAKATIME_API_KEY=<your wakatime API Key>`
+   - GitHub Personal Access Token as `GH_TOKEN=<your github access token>`
 5. You can enable and disable feature flags based on requirements.
 
 This Action will run everyday at 00.00 IST
@@ -89,7 +89,7 @@ name: Waka Readme
 on:
   schedule:
     # Runs at 12am IST
-    - cron: '30 18 * * *'
+    - cron: "30 18 * * *"
   workflow_dispatch:
 jobs:
   update-readme:
@@ -104,54 +104,83 @@ jobs:
 
 - Now you can commit and wait for run automatically, but you can also trigger to run it to see the result now. Just go to the `Actions` in your repo and select your `Profile Readme Development Stats` workflow and click in `Run workflow`. Now wait for a minute or two and you will see your changes.
 
+## Performance Optimizations
+
+### Caching
+
+waka-readme-stats includes a caching mechanism that dramatically improves performance for users with many repositories. The caching system:
+
+- Stores repository data to avoid redundant API calls
+- Only updates data for repositories that have changed
+- Significantly reduces processing time and API rate limit usage
+
+The cache is automatically maintained and no additional configuration is required.
+
+### Benchmarking
+
+For developers who want to measure performance, a benchmarking utility is included:
+
+```bash
+# Basic benchmarking with your GitHub username
+python benchmark.py --username <github_username>
+
+# Run without caching to compare performance
+python benchmark.py --username <github_username> --no-cache
+
+# Run full benchmark suite (includes all API calls)
+python benchmark.py --username <github_username> --full
+```
+
+The benchmarking tool provides detailed metrics on execution time, helping to identify performance bottlenecks.
+
 ## Extras
 
 1. If you want to add the other info to your stats, you can add multiple `FLAGS` in your workflow file by default all flags are enabled
 
->except the lines of code flag due to heavy operation performed
+> except the lines of code flag due to heavy operation performed
 
 ```yml
 - uses: ImBIOS/waka-readme-stats@master
   with:
-      WAKATIME_API_KEY: ${{ secrets.WAKATIME_API_KEY }}
-      GH_TOKEN: ${{ secrets.GH_TOKEN }}
-      SHOW_OS: "False"
-      SHOW_PROJECTS: "False"
+    WAKATIME_API_KEY: ${{ secrets.WAKATIME_API_KEY }}
+    GH_TOKEN: ${{ secrets.GH_TOKEN }}
+    SHOW_OS: "False"
+    SHOW_PROJECTS: "False"
 ```
 
 ### Flags Available
 
 ---
 
-`LOCALE`  This Flag can be used to show stats in your language default is english uses Locale [Short Hand](https://saimana.com/list-of-country-locale-code/) to be passed in the flag variable example of the final result can be found [here](https://github.com/ImBIOS/ImBIOS/blob/master/Readme-fr.md)
+`LOCALE` This Flag can be used to show stats in your language default is english uses Locale [Short Hand](https://saimana.com/list-of-country-locale-code/) to be passed in the flag variable example of the final result can be found [here](https://github.com/ImBIOS/ImBIOS/blob/master/Readme-fr.md)
 
-`SECTION_NAME`        flag can be set to any string, and will be the name of the section to replace in the readme
+`SECTION_NAME` flag can be set to any string, and will be the name of the section to replace in the readme
 
-`COMMIT_BY_ME`        flag can be set to `True` to commit the code using your name and email
+`COMMIT_BY_ME` flag can be set to `True` to commit the code using your name and email
 
-`COMMIT_MESSAGE`        flag can be set to message commit, default is "Updated with Dev Metrics"
+`COMMIT_MESSAGE` flag can be set to message commit, default is "Updated with Dev Metrics"
 
-`COMMIT_USERNAME`        flag can be set to username to commit the code, default is "readme-bot"
+`COMMIT_USERNAME` flag can be set to username to commit the code, default is "readme-bot"
 
-`COMMIT_EMAIL`        flag can be set to email to commit the code, default is "41898282+github-actions[bot]@users.noreply.github.com"
+`COMMIT_EMAIL` flag can be set to email to commit the code, default is "41898282+github-actions[bot]@users.noreply.github.com"
 
-`SHOW_UPDATED_DATE`        flag can be set to `True` to show updated date in end of paragraph
+`SHOW_UPDATED_DATE` flag can be set to `True` to show updated date in end of paragraph
 
-`UPDATED_DATE_FORMAT`        flag can be set to put updated date into a format, default is `"%d/%m/%Y %H:%M:%S"`
+`UPDATED_DATE_FORMAT` flag can be set to put updated date into a format, default is `"%d/%m/%Y %H:%M:%S"`
 
-`SHOW_LINES_OF_CODE`       flag can be set to `True` to show the Lines of code writen till date
+`SHOW_LINES_OF_CODE` flag can be set to `True` to show the Lines of code writen till date
 
 ![Lines of code](https://img.shields.io/badge/From%20Hello%20World%20I've%20written-1.3%20million%20Lines%20of%20code-blue)
 
-`SHOW_TOTAL_CODE_TIME`       flag can be set to `False` to hide *Code Time*
+`SHOW_TOTAL_CODE_TIME` flag can be set to `False` to hide _Code Time_
 
 ![Code Time](http://img.shields.io/badge/Code%20Time-1%2C438%20hrs%2054%20mins-blue)
 
-`SHOW_PROFILE_VIEWS`       flag can be set to `False` to hide the Profile views
+`SHOW_PROFILE_VIEWS` flag can be set to `False` to hide the Profile views
 
 ![Profile Views](http://img.shields.io/badge/Profile%20Views-2189-blue)
 
-`SHOW_COMMIT`       flag can be set to `False` to hide the commit stats
+`SHOW_COMMIT` flag can be set to `False` to hide the commit stats
 
 **I'm an early 🐤**
 
@@ -163,7 +192,7 @@ jobs:
 
 ```
 
-`SHOW_DAYS_OF_WEEK`       flag can be set to `False` to hide the commits made on different days of week
+`SHOW_DAYS_OF_WEEK` flag can be set to `False` to hide the commits made on different days of week
 
 📅 **I'm Most Productive on Sundays**
 
@@ -178,7 +207,7 @@ Sunday       86 commits     █████░░░░░░░░░░░░�
 
 ```
 
-`SHOW_LANGUAGE`       flag can be set to `False` to hide the Coding Language You use
+`SHOW_LANGUAGE` flag can be set to `False` to hide the Coding Language You use
 
 ```text
 💬 Languages:
@@ -189,7 +218,7 @@ Python                   22 mins             █░░░░░░░░░░�
 XML                      8 mins              ░░░░░░░░░░░░░░░░░░░░░░░░░   1.62%
 ```
 
-`SHOW_OS`       flag can be set to `False` to hide the OS details
+`SHOW_OS` flag can be set to `False` to hide the OS details
 
 ```text
 💻 Operating Systems:
@@ -213,7 +242,7 @@ denAPI                   40 mins             ██░░░░░░░░░�
 ⌚︎ Timezone: Asia/Calcutta
 ```
 
-`SHOW_EDITORS`  flag can be set to `False` to hide the list of code-editors used
+`SHOW_EDITORS` flag can be set to `False` to hide the list of code-editors used
 
 ```text
 🔥 Editors:
@@ -222,7 +251,7 @@ PhpStorm                 1 hr 35 mins        ████░░░░░░░�
 PyCharm                  23 mins             █░░░░░░░░░░░░░░░░░░░░░░░░   4.49%
 ```
 
-`SHOW_LANGUAGE_PER_REPO`  flag can be set to `False` to hide the Number of repository in different language and frameworks
+`SHOW_LANGUAGE_PER_REPO` flag can be set to `False` to hide the Number of repository in different language and frameworks
 
 **I mostly code in Vue**
 
@@ -237,32 +266,33 @@ CSS          2 repos        █░░░░░░░░░░░░░░░░�
 
 ```
 
-`SHOW_SHORT_INFO`  flag can be set to `False` to hide the short fun fact info of user
->This section requires personal access token with user permission otherwise data shown will be incorrect here
+`SHOW_SHORT_INFO` flag can be set to `False` to hide the short fun fact info of user
+
+> This section requires personal access token with user permission otherwise data shown will be incorrect here
 
 **🐱 My GitHub Data**
 
 > 🏆 433 Contributions in year 2020
- >
+>
 > 📦 Used 292.3 kB in GitHub's Storage
- >
+>
 > 💼 Opted to Hire
- >
+>
 > 📜 25 Public Repository
- >
+>
 > 🔑 15 Owned Private Repository
 
-`SHOW_LOC_CHART`  flag can be set to `False` to hide the Lines of code written in different quarters of different year
+`SHOW_LOC_CHART` flag can be set to `False` to hide the Lines of code written in different quarters of different year
 
-`IGNORED_REPOS`  flag can be set to `"waka-readme-stats, my-first-repo"` (just an example) to ignore some repos you don’t want to be counted
+`IGNORED_REPOS` flag can be set to `"waka-readme-stats, my-first-repo"` (just an example) to ignore some repos you don't want to be counted
 
 `SYMBOL_VERSION` flag can be set symbol for progress bar (default: `1`)
 
 | Version | Done block | Empty block |
-|-------- | ---------- | ----------- |
-|    1    |      █     |       ░     |
-|    2    |      ⣿     |       ⣀     |
-|    3    |      ⬛    |       ⬜    |
+| ------- | ---------- | ----------- |
+| 1       | █          | ░           |
+| 2       | ⣿          | ⣀           |
+| 3       | ⬛         | ⬜          |
 
 `DEBUG_LOGGING` flag can be set to increase action output verbosity, by default equals internal runner debug property
 
@@ -436,8 +466,7 @@ Made with :heart: and Python 🐍.
 
 # Inspired From
 
-> [Awesome Pinned Gists](https://github.com/matchai/awesome-pinned-gists) <br/>
-> [athul/waka-readme](https://github.com/athul/waka-readme)
+> [Awesome Pinned Gists](https://github.com/matchai/awesome-pinned-gists) <br/> > [athul/waka-readme](https://github.com/athul/waka-readme)
 
 ### This project need a **star** ⭐ from you ♥
 

@@ -175,3 +175,7 @@ cython_debug/
 
 *.lcov
 assets/
+
+# Cache files
+.cache/
+*_repo_cache.json
