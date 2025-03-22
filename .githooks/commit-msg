@@ -3,18 +3,11 @@
 # Path to the commit message file (provided by Git).
 COMMIT_MSG_FILE=$1
 
-# Debug output
-echo "Debug: Checking commit message in file: $COMMIT_MSG_FILE"
-
 # Read the commit message from the file.
 COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
 
-# Debug output
-echo "Debug: Commit message: '$COMMIT_MSG'"
-
-# Testing with simplified regex
-if [[ $COMMIT_MSG =~ ^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert) ]]; then
-  echo "Debug: Regex matched!"
+# More complete regex that enforces the full format
+if [[ $COMMIT_MSG =~ ^(feat|fix|docs|style|refactor|test|chore|build|ci|perf|revert)(\([a-zA-Z0-9_.-]+\))?(!)?:[[:space:]].*$ ]]; then
   exit 0
 else
   echo "ERROR: Commit message does not follow Conventional Commits format."
