@@ -21,11 +21,15 @@ pyyaml = "~=6.0"
 # Codestyle checking modules:
 black = "~=25.1"
 flake8 = "~=6.0"
+# Testing modules:
 pytest = "~=8.3"
 pytest-asyncio = "~=0.25"
 pytest-cov = "~=6.0"
 pytest-mock = "~=3.14"
+# Pre-commit modules:
 pre-commit = "*"
+# Setuptools modules:
+setuptools = "*"
 
 [requires]
 python_version = "3.13"

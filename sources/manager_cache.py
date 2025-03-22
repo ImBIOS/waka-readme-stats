@@ -12,7 +12,7 @@ class CacheManager:
     significantly reducing API calls and processing time for users with many repos.
     """
 
-    CACHE_DIR = '.cache'
+    CACHE_DIR = ".cache"
     CACHE_EXPIRY = 86400  # Cache expiry in seconds (24 hours)
 
     def __init__(self, user_id: str):
@@ -42,7 +42,7 @@ class CacheManager:
             return None
 
         try:
-            with open(self.cache_path, 'r') as f:
+            with open(self.cache_path, "r") as f:
                 cache_data = json.load(f)
 
             if repo_name not in cache_data:
@@ -50,10 +50,10 @@ class CacheManager:
 
             repo_cache = cache_data[repo_name]
             # Check if cache is expired
-            if time.time() - repo_cache.get('timestamp', 0) > self.CACHE_EXPIRY:
+            if time.time() - repo_cache.get("timestamp", 0) > self.CACHE_EXPIRY:
                 return None
 
-            return repo_cache.get('data')
+            return repo_cache.get("data")
         except (json.JSONDecodeError, IOError):
             # If cache file is corrupted or cannot be read, return None
             return None
@@ -68,19 +68,16 @@ class CacheManager:
         cache_data = {}
         if self.cache_path.exists():
             try:
-                with open(self.cache_path, 'r') as f:
+                with open(self.cache_path, "r") as f:
                     cache_data = json.load(f)
             except (json.JSONDecodeError, IOError):
                 # If cache file is corrupted, start with an empty cache
                 cache_data = {}
 
         # Update cache with new data
-        cache_data[repo_name] = {
-            'timestamp': time.time(),
-            'data': data
-        }
+        cache_data[repo_name] = {"timestamp": time.time(), "data": data}
 
-        with open(self.cache_path, 'w') as f:
+        with open(self.cache_path, "w") as f:
             json.dump(cache_data, f)
 
     def clear_cache(self) -> None:
@@ -101,12 +98,12 @@ class CacheManager:
             return None
 
         try:
-            with open(self.cache_path, 'r') as f:
+            with open(self.cache_path, "r") as f:
                 cache_data = json.load(f)
 
             if repo_name not in cache_data:
                 return None
 
-            return cache_data[repo_name].get('timestamp')
+            return cache_data[repo_name].get("timestamp")
         except (json.JSONDecodeError, IOError):
             return None

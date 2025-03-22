@@ -72,31 +72,32 @@ class BenchmarkTracker:
 
         summary = "Performance Benchmark Summary:\n"
         summary += "=================================\n"
-        
+
         for result in cls._results:
             summary += f"{result}\n"
-            
+
             # Add metadata if present
             if result.metadata:
                 for key, value in result.metadata.items():
                     summary += f"  - {key}: {value}\n"
-                    
+
         summary += "=================================\n"
         summary += f"Total execution time: {cls.get_total_execution_time():.4f}s\n"
-        
+
         return summary
 
 
 def benchmark(name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = None) -> Callable:
     """Decorator to benchmark a function's execution time.
-    
+
     Args:
         name: Optional name for the benchmark
         metadata: Optional metadata about the benchmark
-        
+
     Returns:
         Decorated function
     """
+
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -104,48 +105,42 @@ def benchmark(name: Optional[str] = None, metadata: Optional[Dict[str, Any]] = N
             start_time = time.time()
             result = func(*args, **kwargs)
             end_time = time.time()
-            
+
             execution_time = end_time - start_time
-            
+
             # Add dynamic metadata if provided
             final_metadata = metadata.copy() if metadata else {}
-            if 'args_count' not in final_metadata:
-                final_metadata['args_count'] = len(args)
-                
-            benchmark_result = BenchmarkResult(
-                name=benchmark_name,
-                execution_time=execution_time,
-                metadata=final_metadata
-            )
-            
+            if "args_count" not in final_metadata:
+                final_metadata["args_count"] = len(args)
+
+            benchmark_result = BenchmarkResult(name=benchmark_name, execution_time=execution_time, metadata=final_metadata)
+
             BenchmarkTracker.add_result(benchmark_result)
             return result
+
         return wrapper
+
     return decorator
 
 
 def benchmark_block(name: str, metadata: Optional[Dict[str, Any]] = None) -> Tuple[Callable, Callable]:
     """Context manager for benchmarking a block of code.
-    
+
     Args:
         name: Name for the benchmark
         metadata: Optional metadata about the benchmark
-        
+
     Returns:
         Start and end functions for the benchmark
     """
     start_time = [0.0]  # Use a list to allow modification in nested scope
-    
+
     def start() -> None:
         start_time[0] = time.time()
-        
+
     def end() -> None:
         execution_time = time.time() - start_time[0]
-        benchmark_result = BenchmarkResult(
-            name=name,
-            execution_time=execution_time,
-            metadata=metadata
-        )
+        benchmark_result = BenchmarkResult(name=name, execution_time=execution_time, metadata=metadata)
         BenchmarkTracker.add_result(benchmark_result)
-        
+
     return start, end

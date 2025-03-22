@@ -53,27 +53,17 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
     date_data = dict()
 
     # Filter out ignored repositories
-    active_repos = [
-        repo for repo in repositories if repo["name"] not in EM.IGNORED_REPOS
-    ]
+    active_repos = [repo for repo in repositories if repo["name"] not in EM.IGNORED_REPOS]
 
     # Use caching to only process repositories that have changed
     cached_repos, new_repos = separate_cached_and_new_repos(active_repos)
 
-    DBM.i(
-        f"Processing {len(cached_repos)} cached repositories and {len(new_repos)} new repositories"
-    )
+    DBM.i(f"Processing {len(cached_repos)} cached repositories and {len(new_repos)} new repositories")
 
     # Process cached repositories
     for ind, repo in enumerate(cached_repos):
-        repo_name = (
-            "[private]"
-            if repo["isPrivate"]
-            else f"{repo['owner']['login']}/{repo['name']}"
-        )
-        DBM.i(
-            f"\t{ind + 1}/{len(cached_repos)} Using cached data for repo: {repo_name}"
-        )
+        repo_name = "[private]" if repo["isPrivate"] else f"{repo['owner']['login']}/{repo['name']}"
+        DBM.i(f"\t{ind + 1}/{len(cached_repos)} Using cached data for repo: {repo_name}")
 
         # Get cached commit data and update yearly and date data
         commit_cache = get_cached_commit_data(repo)
@@ -82,11 +72,7 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
 
     # Process new repositories
     for ind, repo in enumerate(new_repos):
-        repo_name = (
-            "[private]"
-            if repo["isPrivate"]
-            else f"{repo['owner']['login']}/{repo['name']}"
-        )
+        repo_name = "[private]" if repo["isPrivate"] else f"{repo['owner']['login']}/{repo['name']}"
         DBM.i(f"\t{ind + 1}/{len(new_repos)} Retrieving new repo: {repo_name}")
         await update_data_with_commit_stats(repo, yearly_data, date_data)
 
@@ -140,9 +126,7 @@ def get_cached_commit_data(repo: Dict) -> Optional[Dict]:
     return GHM.CACHE.get_cached_data(f"{repo['name']}_commits")
 
 
-def update_yearly_data_from_cache(
-    commit_cache: Dict, yearly_data: Dict, date_data: Dict
-) -> None:
+def update_yearly_data_from_cache(commit_cache: Dict, yearly_data: Dict, date_data: Dict) -> None:
     """
     Updates yearly data dictionaries from cached commit data.
 
@@ -185,9 +169,7 @@ def update_yearly_data_from_cache(
 
 
 @benchmark(name="Update Commit Stats", metadata={"operation": "repo_processing"})
-async def update_data_with_commit_stats(
-    repo_details: Dict, yearly_data: Dict, date_data: Dict
-):
+async def update_data_with_commit_stats(repo_details: Dict, yearly_data: Dict, date_data: Dict):
     """
     Updates yearly commit data with commits from given repository.
     Skips update if the commit isn't related to any repository.
@@ -197,9 +179,7 @@ async def update_data_with_commit_stats(
     :param date_data: Commit date dictionary to update.
     """
     owner = repo_details["owner"]["login"]
-    branch_data = await DM.get_remote_graphql(
-        "repo_branch_list", owner=owner, name=repo_details["name"]
-    )
+    branch_data = await DM.get_remote_graphql("repo_branch_list", owner=owner, name=repo_details["name"])
     if len(branch_data) == 0:
         DBM.w("\t\tBranch data not found, skipping repository...")
         return
@@ -227,9 +207,7 @@ async def update_data_with_commit_stats(
             quarter = (datetime.fromisoformat(date).month - 1) // 3 + 1
 
             # Update repo-specific date data
-            repo_date_data[repo_details["name"]][branch["name"]][commit["oid"]] = (
-                commit["committedDate"]
-            )
+            repo_date_data[repo_details["name"]][branch["name"]][commit["oid"]] = commit["committedDate"]
 
             # Update repository's yearly data
             if repo_details["primaryLanguage"] is not None:
@@ -237,49 +215,29 @@ async def update_data_with_commit_stats(
                     repo_yearly_data[curr_year] = {}
                 if quarter not in repo_yearly_data[curr_year]:
                     repo_yearly_data[curr_year][quarter] = {}
-                if (
-                    repo_details["primaryLanguage"]["name"]
-                    not in repo_yearly_data[curr_year][quarter]
-                ):
-                    repo_yearly_data[curr_year][quarter][
-                        repo_details["primaryLanguage"]["name"]
-                    ] = {"add": 0, "del": 0}
+                if repo_details["primaryLanguage"]["name"] not in repo_yearly_data[curr_year][quarter]:
+                    repo_yearly_data[curr_year][quarter][repo_details["primaryLanguage"]["name"]] = {"add": 0, "del": 0}
 
-                repo_yearly_data[curr_year][quarter][
-                    repo_details["primaryLanguage"]["name"]
-                ]["add"] += commit["additions"]
-                repo_yearly_data[curr_year][quarter][
-                    repo_details["primaryLanguage"]["name"]
-                ]["del"] += commit["deletions"]
+                repo_yearly_data[curr_year][quarter][repo_details["primaryLanguage"]["name"]]["add"] += commit["additions"]
+                repo_yearly_data[curr_year][quarter][repo_details["primaryLanguage"]["name"]]["del"] += commit["deletions"]
 
                 # Also update the main yearly data
                 if curr_year not in yearly_data:
                     yearly_data[curr_year] = {}
                 if quarter not in yearly_data[curr_year]:
                     yearly_data[curr_year][quarter] = {}
-                if (
-                    repo_details["primaryLanguage"]["name"]
-                    not in yearly_data[curr_year][quarter]
-                ):
-                    yearly_data[curr_year][quarter][
-                        repo_details["primaryLanguage"]["name"]
-                    ] = {"add": 0, "del": 0}
+                if repo_details["primaryLanguage"]["name"] not in yearly_data[curr_year][quarter]:
+                    yearly_data[curr_year][quarter][repo_details["primaryLanguage"]["name"]] = {"add": 0, "del": 0}
 
-                yearly_data[curr_year][quarter][
-                    repo_details["primaryLanguage"]["name"]
-                ]["add"] += commit["additions"]
-                yearly_data[curr_year][quarter][
-                    repo_details["primaryLanguage"]["name"]
-                ]["del"] += commit["deletions"]
+                yearly_data[curr_year][quarter][repo_details["primaryLanguage"]["name"]]["add"] += commit["additions"]
+                yearly_data[curr_year][quarter][repo_details["primaryLanguage"]["name"]]["del"] += commit["deletions"]
 
             # Update main date data
             if repo_details["name"] not in date_data:
                 date_data[repo_details["name"]] = {}
             if branch["name"] not in date_data[repo_details["name"]]:
                 date_data[repo_details["name"]][branch["name"]] = {}
-            date_data[repo_details["name"]][branch["name"]][commit["oid"]] = commit[
-                "committedDate"
-            ]
+            date_data[repo_details["name"]][branch["name"]][commit["oid"]] = commit["committedDate"]
 
         if not EM.DEBUG_RUN:
             await sleep(0.4)
