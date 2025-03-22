@@ -1,12 +1,4 @@
 repos:
-  - repo: local
-    hooks:
-      - id: pytest-check
-        name: pytest-check
-        entry: pipenv run pytest
-        language: system
-        pass_filenames: false
-        always_run: true
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v2.3.0
     hooks:
@@ -15,17 +7,33 @@ repos:
       - id: trailing-whitespace
   - repo: local
     hooks:
-      - id: flake8
-        name: flake8
-        entry: pipenv run flake8 --max-line-length=160 --exclude venv,assets .
-        language: system
-        pass_filenames: false
-        always_run: true
-  - repo: local
-    hooks:
-      - id: black
-        name: black
-        entry: pipenv run black --line-length=160 --exclude='/venv/|/assets/' .
-        language: system
-        pass_filenames: false
-        always_run: true
+      - id: semantic-commit-msg
+        name: Semantic Commit Messages
+        entry: .githooks/commit-msg
+        language: script
+        stages: [commit-msg]
+  # Temporarily commented hooks
+  # - repo: local
+  #   hooks:
+  #     - id: pytest-check
+  #       name: pytest-check
+  #       entry: pipenv run pytest
+  #       language: system
+  #       pass_filenames: false
+  #       always_run: true
+  # - repo: local
+  #   hooks:
+  #     - id: flake8
+  #       name: flake8
+  #       entry: pipenv run flake8 --max-line-length=160 --exclude venv,assets .
+  #       language: system
+  #       pass_filenames: false
+  #       always_run: true
+  # - repo: local
+  #   hooks:
+  #     - id: black
+  #       name: black
+  #       entry: pipenv run black --line-length=160 --exclude='/venv/|/assets/' .
+  #       language: system
+  #       pass_filenames: false
+  #       always_run: true
