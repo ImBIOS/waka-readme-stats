@@ -12,7 +12,7 @@ from manager_github import GitHubManager as GHM
 
 # Try to import benchmarking utilities
 try:
-    from benchmarking import benchmark, benchmark_block
+    from benchmarking import benchmark
 except ImportError:
     # Define no-op benchmarking functions if not available
     def benchmark(name=None, metadata=None):
@@ -20,15 +20,6 @@ except ImportError:
             return func
 
         return decorator
-
-    def benchmark_block(name=None, metadata=None):
-        def start():
-            pass
-
-        def end():
-            pass
-
-        return start, end
 
 
 @benchmark(name="Calculate Commit Data", metadata={"operation": "commit_processing"})
