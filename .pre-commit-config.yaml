@@ -29,3 +29,10 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
+  - repo: local
+    hooks:
+      - id: semantic-commit-msg
+        name: Semantic Commit Messages
+        entry: .githooks/commit-msg
+        language: script
+        stages: [commit-msg]
