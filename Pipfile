@@ -20,7 +20,7 @@ pyyaml = "~=6.0"
 [dev-packages]
 # Codestyle checking modules:
 black = "~=25.1"
-flake8 = "~=6.0"
+flake8 = "~=7.2"
 pytest = "~=8.3"
 pytest-asyncio = "~=0.25"
 pytest-cov = "~=6.0"
