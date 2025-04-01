@@ -23,7 +23,7 @@ black = "~=25.1"
 flake8 = "~=6.0"
 pytest = "~=8.3"
 pytest-asyncio = "~=0.25"
-pytest-cov = "~=6.0"
+pytest-cov = "~=6.1"
 pytest-mock = "~=3.14"
 pre-commit = "*"
 
