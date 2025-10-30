@@ -175,3 +175,6 @@ cython_debug/
 
 *.lcov
 assets/
+
+coverage.json
+repo/

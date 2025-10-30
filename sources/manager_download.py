@@ -271,7 +271,21 @@ class DownloadManager:
         :param kwargs: Parameters for substitution of variables in dynamic query.
         :return: Response JSON dictionary.
         """
+        from manager_debug import DebugManager as DBM
+
         initial_query_response = await DownloadManager._fetch_graphql_query(query, **kwargs, pagination="first: 100")
+
+        # Check for errors in response
+        if "errors" in initial_query_response:
+            errors = initial_query_response["errors"]
+            for error in errors:
+                if error.get("type") == "RATE_LIMIT":
+                    DBM.p(f"GitHub GraphQL API rate limit exceeded for query '{query}'!")
+                    DBM.p(f"Error: {error.get('message', 'No message')}")
+                    DBM.p("Please wait for rate limit to reset or check your token permissions.")
+                else:
+                    DBM.p(f"GraphQL query '{query}' returned error: {error}")
+
         page_list, page_info = DownloadManager._find_pagination_and_data_list(initial_query_response)
         while page_info["hasNextPage"]:
             pagination = f'first: 100, after: "{page_info["endCursor"]}"'
