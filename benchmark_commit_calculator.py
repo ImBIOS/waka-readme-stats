@@ -5,13 +5,13 @@ vs new parallel implementation of yearly_commit_calculator.
 """
 
 import asyncio
+import os
 import sys
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 from unittest.mock import MagicMock, patch
-import os
 
 # Setup paths
 project_root = Path(__file__).parent
