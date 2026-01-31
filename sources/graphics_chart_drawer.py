@@ -1,3 +1,4 @@
+from os import makedirs
 from typing import Dict
 
 import matplotlib.patches as mpatches
@@ -23,6 +24,7 @@ async def create_loc_graph(yearly_data: Dict, save_path: str):
         fig = plt.figure()
         ax = fig.add_axes([0, 0, 1.5, 1])
         ax.set_ylabel("LOC added", fontdict=dict(weight="bold"))
+        makedirs(FM.ASSETS_DIR, exist_ok=True)
         plt.savefig(save_path, bbox_inches="tight")
         plt.close(fig)
         return
@@ -109,5 +111,6 @@ async def create_loc_graph(yearly_data: Dict, save_path: str):
         max_deletions = amax(joined[:, 1])
         plt.ylim(top=max_additions + max_offset, bottom=-max_deletions - max_offset)
 
+    makedirs(FM.ASSETS_DIR, exist_ok=True)
     plt.savefig(save_path, bbox_inches="tight")
     plt.close(fig)
