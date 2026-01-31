@@ -5,8 +5,8 @@ from string import Template
 from typing import Awaitable, Callable, Dict, List, Optional, Tuple
 
 from httpx import AsyncClient
-from manager_debug import DebugManager as DBM
-from manager_environment import EnvironmentManager as EM
+from .manager_debug import DebugManager as DBM
+from .manager_environment import EnvironmentManager as EM
 from yaml import safe_load
 
 GITHUB_API_QUERIES = {

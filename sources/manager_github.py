@@ -9,9 +9,9 @@ from string import ascii_letters
 from git import Repo, Actor
 from github import Github, AuthenticatedUser, Repository
 
-from manager_environment import EnvironmentManager as EM
-from manager_file import FileManager as FM
-from manager_debug import DebugManager as DBM
+from .manager_environment import EnvironmentManager as EM
+from .manager_file import FileManager as FM
+from .manager_debug import DebugManager as DBM
 
 
 def init_github_manager():

@@ -1,0 +1,29 @@
+name: Waka Trigger Test
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 18 * * 0"
+
+jobs:
+  update-readme:
+    name: Update Readme with Metrics
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ImBIOS/waka-readme-stats@master
+        with:
+          SHOW_PROJECTS: "False"
+          WAKATIME_API_KEY: ${{ secrets.WAKATIME_API_KEY }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          SECTION_NAME: CodingStats
+          COMMIT_MESSAGE: Updated waka-readme graph with new metrics
+
+  rerun-failed-jobs:
+    runs-on: ubuntu-latest
+    needs: [update-readme]
+    if: failure()
+    steps:
+      - name: Rerun failed jobs in the current workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run rerun ${{ github.run_id }} --failed

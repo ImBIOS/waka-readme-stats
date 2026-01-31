@@ -4,7 +4,7 @@ from pickle import load as load_pickle, dump as dump_pickle
 from json import load as load_json
 from typing import Dict, Optional, Any
 
-from manager_environment import EnvironmentManager as EM
+from .manager_environment import EnvironmentManager as EM
 
 
 def init_localization_manager():

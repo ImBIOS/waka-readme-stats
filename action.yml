@@ -144,8 +144,13 @@ inputs:
 
   DEBUG_LOGGING:
     required: false
-    description: "Whether to enable action debug logging"
+    description: "Whether to enable action debug logging (deprecated, use LOG_LEVEL instead)"
     default: ${{ runner.debug }}
+
+  LOG_LEVEL:
+    required: false
+    description: "Logging level: info (default), debug, trace"
+    default: "info"
 
 runs:
   using: "docker"

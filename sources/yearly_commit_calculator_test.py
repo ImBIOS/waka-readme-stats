@@ -37,8 +37,8 @@ if "github" not in sys.modules:
 os.environ["INPUT_GH_TOKEN"] = "mock_gh_token"
 os.environ["INPUT_WAKATIME_API_KEY"] = "mock_wakatime_key"
 
-from yearly_commit_calculator import calculate_commit_data, update_data_with_commit_stats  # noqa: E402
-from manager_debug import DebugManager as DBM  # noqa: E402
+from .yearly_commit_calculator import calculate_commit_data, update_data_with_commit_stats  # noqa: E402
+from .manager_debug import DebugManager as DBM  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -71,11 +71,11 @@ async def test_calculate_commit_data_debug_run_with_cache():
         {"test-repo": {"main": {"commit1": "2023-01-15T10:00:00Z"}}},
     )
 
-    with patch("yearly_commit_calculator.EM") as mock_em:
+    with patch("sources.yearly_commit_calculator.EM") as mock_em:
         mock_em.DEBUG_RUN = True
         mock_em.IGNORED_REPOS = []
 
-        with patch("yearly_commit_calculator.FM") as mock_fm:
+        with patch("sources.yearly_commit_calculator.FM") as mock_fm:
             mock_fm.cache_binary.return_value = mock_cache
             mock_fm.t.return_value = "test"
 
@@ -108,17 +108,17 @@ async def test_calculate_commit_data_debug_run_no_cache():
         }
     ]
 
-    with patch("yearly_commit_calculator.EM") as mock_em:
+    with patch("sources.yearly_commit_calculator.EM") as mock_em:
         mock_em.DEBUG_RUN = True
         mock_em.IGNORED_REPOS = []
 
-        with patch("yearly_commit_calculator.DM") as mock_dm:
+        with patch("sources.yearly_commit_calculator.DM") as mock_dm:
             mock_dm.get_remote_graphql = AsyncMock(side_effect=[mock_branch_data, mock_commit_data])
 
-            with patch("yearly_commit_calculator.GHM") as mock_ghm:
+            with patch("sources.yearly_commit_calculator.GHM") as mock_ghm:
                 mock_ghm.USER.node_id = "user123"
 
-                with patch("yearly_commit_calculator.FM") as mock_fm:
+                with patch("sources.yearly_commit_calculator.FM") as mock_fm:
                     mock_fm.cache_binary.side_effect = [None, None]  # No cache
                     mock_fm.write_file = MagicMock()
                     mock_fm.t.return_value = "test"
@@ -143,14 +143,14 @@ async def test_calculate_commit_data_ignored_repos():
         {"name": "valid-repo", "isPrivate": False, "owner": {"login": "testuser"}, "primaryLanguage": {"name": "Python"}},
     ]
 
-    with patch("yearly_commit_calculator.EM") as mock_em:
+    with patch("sources.yearly_commit_calculator.EM") as mock_em:
         mock_em.DEBUG_RUN = False
         mock_em.IGNORED_REPOS = ["ignored-repo"]
 
-        with patch("yearly_commit_calculator.DM") as mock_dm:
+        with patch("sources.yearly_commit_calculator.DM") as mock_dm:
             mock_dm.get_remote_graphql = AsyncMock(side_effect=[[], []])  # Empty branch data
 
-            with patch("yearly_commit_calculator.FM") as mock_fm:
+            with patch("sources.yearly_commit_calculator.FM") as mock_fm:
                 mock_fm.t.return_value = "test"
 
                 yearly_data, commit_data = await calculate_commit_data(repositories)
@@ -181,13 +181,13 @@ async def test_update_data_with_commit_stats():
         }
     ]
 
-    with patch("yearly_commit_calculator.DM") as mock_dm:
+    with patch("sources.yearly_commit_calculator.DM") as mock_dm:
         mock_dm.get_remote_graphql = AsyncMock(side_effect=[mock_branch_data, mock_commit_data])
 
-        with patch("yearly_commit_calculator.GHM") as mock_ghm:
+        with patch("sources.yearly_commit_calculator.GHM") as mock_ghm:
             mock_ghm.USER.node_id = "user123"
 
-            with patch("yearly_commit_calculator.FM") as mock_fm:
+            with patch("sources.yearly_commit_calculator.FM") as mock_fm:
                 mock_fm.t.return_value = "test"
 
                 await update_data_with_commit_stats(repo_details, yearly_data, date_data)
@@ -210,10 +210,10 @@ async def test_update_data_with_commit_stats_no_branches():
     yearly_data = {}
     date_data = {}
 
-    with patch("yearly_commit_calculator.DM") as mock_dm:
+    with patch("sources.yearly_commit_calculator.DM") as mock_dm:
         mock_dm.get_remote_graphql = AsyncMock(return_value=[])  # No branches
 
-        with patch("yearly_commit_calculator.FM") as mock_fm:
+        with patch("sources.yearly_commit_calculator.FM") as mock_fm:
             mock_fm.t.return_value = "test"
 
             await update_data_with_commit_stats(repo_details, yearly_data, date_data)
@@ -243,13 +243,13 @@ async def test_update_data_with_commit_stats_no_primary_language():
         }
     ]
 
-    with patch("yearly_commit_calculator.DM") as mock_dm:
+    with patch("sources.yearly_commit_calculator.DM") as mock_dm:
         mock_dm.get_remote_graphql = AsyncMock(side_effect=[mock_branch_data, mock_commit_data])
 
-        with patch("yearly_commit_calculator.GHM") as mock_ghm:
+        with patch("sources.yearly_commit_calculator.GHM") as mock_ghm:
             mock_ghm.USER.node_id = "user123"
 
-            with patch("yearly_commit_calculator.FM") as mock_fm:
+            with patch("sources.yearly_commit_calculator.FM") as mock_fm:
                 mock_fm.t.return_value = "test"
 
                 await update_data_with_commit_stats(repo_details, yearly_data, date_data)
@@ -292,13 +292,13 @@ async def test_calculate_commit_data_runs_in_parallel(monkeypatch):
     # Force high concurrency so it's not the bottleneck
     monkeypatch.setenv("INPUT_MAX_CONCURRENCY", "16")
 
-    with patch("yearly_commit_calculator.EM") as mock_em:
+    with patch("sources.yearly_commit_calculator.EM") as mock_em:
         mock_em.DEBUG_RUN = True
         mock_em.IGNORED_REPOS = []
 
-        with patch("yearly_commit_calculator.DM") as mock_dm:
+        with patch("sources.yearly_commit_calculator.DM") as mock_dm:
             mock_dm.get_remote_graphql = AsyncMock(side_effect=mock_get_remote_graphql)
-            with patch("yearly_commit_calculator.GHM") as mock_ghm:
+            with patch("sources.yearly_commit_calculator.GHM") as mock_ghm:
                 mock_ghm.USER.node_id = "user123"
 
                 start = datetime.now()

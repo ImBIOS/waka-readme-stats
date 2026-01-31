@@ -4,7 +4,7 @@ from string import Template
 from typing import Dict
 
 from humanize import precisedelta
-from manager_environment import EnvironmentManager as EM
+from .manager_environment import EnvironmentManager as EM
 
 
 def init_debug_manager():
@@ -13,7 +13,16 @@ def init_debug_manager():
     - Setup headers for GitHub GraphQL requests.
     - Launch static queries in background.
     """
-    DebugManager.create_logger("DEBUG" if EM.DEBUG_LOGGING else "ERROR")
+    if EM.DEBUG_LOGGING:
+        level = "DEBUG"
+    elif EM.LOG_LEVEL == "trace":
+        level = "TRACE"
+    elif EM.LOG_LEVEL == "debug":
+        level = "DEBUG"
+    else:
+        level = "INFO"
+
+    DebugManager.create_logger(level)
 
 
 class DebugManager:

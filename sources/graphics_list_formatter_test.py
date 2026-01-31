@@ -7,7 +7,7 @@ import pytest
 os.environ["INPUT_GH_TOKEN"] = "mock_gh_token"
 os.environ["INPUT_WAKATIME_API_KEY"] = "mock_wakatime_key"
 
-from graphics_list_formatter import (  # noqa: E402
+from .graphics_list_formatter import (  # noqa: E402
     Symbol,
     make_commit_day_time_list,
     make_graph,
@@ -42,7 +42,7 @@ def test_symbol_get_symbols():
 
 def test_make_graph_zero_percent():
     """Test make_graph with 0% completion"""
-    with patch("graphics_list_formatter.EM") as mock_em:
+    with patch("sources.graphics_list_formatter.EM") as mock_em:
         mock_em.SYMBOL_VERSION = 1
         result = make_graph(0)
         assert result == "░" * 25
@@ -50,7 +50,7 @@ def test_make_graph_zero_percent():
 
 def test_make_graph_one_hundred_percent():
     """Test make_graph with 100% completion"""
-    with patch("graphics_list_formatter.EM") as mock_em:
+    with patch("sources.graphics_list_formatter.EM") as mock_em:
         mock_em.SYMBOL_VERSION = 1
         result = make_graph(100)
         assert result == "█" * 25
@@ -58,7 +58,7 @@ def test_make_graph_one_hundred_percent():
 
 def test_make_graph_fifty_percent():
     """Test make_graph with 50% completion"""
-    with patch("graphics_list_formatter.EM") as mock_em:
+    with patch("sources.graphics_list_formatter.EM") as mock_em:
         mock_em.SYMBOL_VERSION = 1
         result = make_graph(50)
         # 50 / 4 = 12.5 -> rounded to 12
@@ -139,7 +139,7 @@ def test_make_language_per_repo_list():
         {"primaryLanguage": None},  # Should be skipped
     ]
 
-    with patch("graphics_list_formatter.FM") as mock_fm:
+    with patch("sources.graphics_list_formatter.FM") as mock_fm:
         mock_fm.t.return_value = "I Mostly Code in %s"
         result = make_language_per_repo_list(repositories)
 
@@ -153,7 +153,7 @@ def test_make_language_per_repo_list_no_languages():
     """Test make_language_per_repo_list with no language info"""
     repositories = [{"primaryLanguage": None}, {"primaryLanguage": None}]
 
-    with patch("graphics_list_formatter.FM") as mock_fm:
+    with patch("sources.graphics_list_formatter.FM") as mock_fm:
         mock_fm.t.return_value = "I Mostly Code in"
         # This should raise ValueError when no languages, let's just skip it
         try:
@@ -179,12 +179,12 @@ async def test_make_commit_day_time_list():
         }
     }
 
-    with patch("graphics_list_formatter.EM") as mock_em:
+    with patch("sources.graphics_list_formatter.EM") as mock_em:
         mock_em.SHOW_COMMIT = True
         mock_em.SHOW_DAYS_OF_WEEK = True
         mock_em.SYMBOL_VERSION = "1"
 
-        with patch("graphics_list_formatter.FM") as mock_fm:
+        with patch("sources.graphics_list_formatter.FM") as mock_fm:
 
             def mock_translate(key):
                 translations = {
@@ -221,12 +221,12 @@ async def test_make_commit_day_time_list_no_commits():
     repositories = [{"name": "repo1"}]
     commit_dates = {}
 
-    with patch("graphics_list_formatter.EM") as mock_em:
+    with patch("sources.graphics_list_formatter.EM") as mock_em:
         mock_em.SHOW_COMMIT = True
         mock_em.SHOW_DAYS_OF_WEEK = True
         mock_em.SYMBOL_VERSION = "1"
 
-        with patch("graphics_list_formatter.FM") as mock_fm:
+        with patch("sources.graphics_list_formatter.FM") as mock_fm:
 
             def mock_translate(key):
                 translations = {
@@ -258,12 +258,12 @@ async def test_make_commit_day_time_list_show_commit_disabled():
         }
     }
 
-    with patch("graphics_list_formatter.EM") as mock_em:
+    with patch("sources.graphics_list_formatter.EM") as mock_em:
         mock_em.SHOW_COMMIT = False
         mock_em.SHOW_DAYS_OF_WEEK = True
         mock_em.SYMBOL_VERSION = "1"
 
-        with patch("graphics_list_formatter.FM") as mock_fm:
+        with patch("sources.graphics_list_formatter.FM") as mock_fm:
 
             def mock_translate(key):
                 translations = {

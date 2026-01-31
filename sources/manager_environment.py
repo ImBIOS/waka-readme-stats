@@ -48,3 +48,8 @@ class EnvironmentManager:
 
     DEBUG_LOGGING = getenv("INPUT_DEBUG_LOGGING", "0").lower() in _TRUTHY
     DEBUG_RUN = getenv("DEBUG_RUN", "False").lower() in _TRUTHY
+    LOG_LEVEL = getenv("INPUT_LOG_LEVEL", "info").lower()
+
+    # Cache settings
+    USE_CACHE = getenv("INPUT_USE_CACHE", "True").lower() in _TRUTHY
+    CACHE_TTL_DAYS = int(getenv("INPUT_CACHE_TTL_DAYS", "7"))

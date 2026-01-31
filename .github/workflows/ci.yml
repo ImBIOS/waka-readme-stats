@@ -37,6 +37,15 @@ jobs:
           python-version: 3.13
           cache: "pipenv"
 
+      - name: Restore repo cache 📦
+        if: ${{ github.event_name == 'pull_request_target' }}
+        uses: actions/cache@v4
+        with:
+          path: .repo_cache
+          key: repo-cache-${{ github.actor }}-${{ hashFiles('.github/workflows/ci.yml') }}
+          restore-keys: |
+            repo-cache-${{ github.actor }}-
+
       - name: Install pipenv
         run: pip install pipenv
 
@@ -109,6 +118,8 @@ jobs:
           INPUT_COMMIT_BY_ME: True
           INPUT_DEBUG_LOGGING: True # Not for prod
           DEBUG_RUN: True # Not for prod
+          INPUT_USE_CACHE: True
+          INPUT_CACHE_TTL_DAYS: 7
         run: pipenv run python3 sources/main.py
 
       - name: Save Branch Name Without Slashes 📛

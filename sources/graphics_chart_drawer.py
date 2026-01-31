@@ -2,8 +2,8 @@ from typing import Dict
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-from manager_download import DownloadManager as DM
-from manager_file import FileManager as FM
+from .manager_download import DownloadManager as DM
+from .manager_file import FileManager as FM
 from numpy import add, amax, arange, array, zeros
 
 MAX_LANGUAGES = 5  # Number of top languages to add to chart, for each year quarter

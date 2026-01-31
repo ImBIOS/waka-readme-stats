@@ -20,10 +20,10 @@ os.environ["INPUT_SHOW_TIME"] = "true"
 os.environ["INPUT_SHOW_MASKED_TIME"] = "false"
 os.environ["INPUT_SYMBOL_VERSION"] = "1"
 
-from manager_debug import DebugManager  # noqa: E402
+from .manager_debug import DebugManager  # noqa: E402
 
 # Now we can safely import the modules
-from manager_download import DownloadManager, init_download_manager  # noqa: E402
+from .manager_download import DownloadManager, init_download_manager  # noqa: E402
 
 # Initialize DebugManager logger
 DebugManager._logger = logging.getLogger("test")
@@ -57,7 +57,7 @@ async def setup_client():
 @pytest_asyncio.fixture
 async def mock_client():
     """Fixture to create a mock AsyncClient"""
-    with patch("manager_download.AsyncClient") as mock:
+    with patch("httpx.AsyncClient") as mock:
         client = AsyncMock()
         client.post.return_value = AsyncMock(
             status_code=200,

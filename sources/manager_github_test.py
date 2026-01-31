@@ -7,7 +7,7 @@ import pytest
 os.environ["INPUT_GH_TOKEN"] = "mock_gh_token"
 os.environ["INPUT_WAKATIME_API_KEY"] = "mock_wakatime_key"
 
-from manager_github import GitHubManager, init_github_manager  # noqa: E402
+from .manager_github import GitHubManager, init_github_manager  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -36,16 +36,16 @@ def test_init_github_manager():
     mock_user.login = "testuser"
     mock_remote = MagicMock()
 
-    with patch("manager_github.Github") as mock_github_class:
+    with patch("sources.manager_github.Github") as mock_github_class:
         mock_github_instance = mock_github_class.return_value
         mock_github_instance.get_user.return_value = mock_user
         mock_github_instance.get_repo.return_value = mock_remote
 
-        with patch("manager_github.Repo") as mock_repo_class:
+        with patch("sources.manager_github.Repo") as mock_repo_class:
             mock_repo_class.clone_from.return_value
 
-            with patch("manager_github.rmtree") as mock_rmtree:
-                with patch("manager_github.DBM") as mock_dbm:
+            with patch("sources.manager_github.rmtree") as mock_rmtree:
+                with patch("sources.manager_github.DBM") as mock_dbm:
                     init_github_manager()
 
                     mock_rmtree.assert_called_once()
@@ -59,17 +59,17 @@ def test_prepare_github_env():
     mock_remote = MagicMock()
     mock_remote.default_branch = "main"
 
-    with patch("manager_github.Github") as mock_github_class:
+    with patch("sources.manager_github.Github") as mock_github_class:
         mock_github_instance = mock_github_class.return_value
         mock_github_instance.get_user.return_value = mock_user
         mock_github_instance.get_repo.return_value = mock_remote
 
-        with patch("manager_github.Repo") as mock_repo_class:
+        with patch("sources.manager_github.Repo") as mock_repo_class:
             mock_repo_instance = mock_repo_class.clone_from.return_value
             mock_repo_instance.git.checkout = MagicMock()
 
-            with patch("manager_github.rmtree"):
-                with patch("manager_github.EM") as mock_em:
+            with patch("sources.manager_github.rmtree"):
+                with patch("sources.manager_github.EM") as mock_em:
                     mock_em.GH_TOKEN = "test_token"
                     mock_em.COMMIT_SINGLE = False
                     mock_em.PULL_BRANCH_NAME = ""
@@ -89,7 +89,7 @@ def test_get_author_commit_by_me():
     mock_user.email = "test@example.com"
     GitHubManager.USER = mock_user
 
-    with patch("manager_github.EM") as mock_em:
+    with patch("sources.manager_github.EM") as mock_em:
         mock_em.COMMIT_BY_ME = True
         mock_em.COMMIT_USERNAME = "customname"
         mock_em.COMMIT_EMAIL = "custom@example.com"
@@ -106,7 +106,7 @@ def test_get_author_not_by_me():
     mock_user.login = "testuser"
     GitHubManager.USER = mock_user
 
-    with patch("manager_github.EM") as mock_em:
+    with patch("sources.manager_github.EM") as mock_em:
         mock_em.COMMIT_BY_ME = False
         mock_em.COMMIT_USERNAME = ""
         mock_em.COMMIT_EMAIL = ""
@@ -154,7 +154,7 @@ def test_update_readme():
         "builtins.open",
         mock_open(read_data="<!--START_SECTION:waka-->\nOld content\n<!--END_SECTION:waka-->"),
     ):
-        with patch("manager_github.DBM") as mock_dbm:
+        with patch("sources.manager_github.DBM") as mock_dbm:
             GitHubManager.update_readme("New stats")
 
             mock_repo.git.add.assert_called_once_with("/test/repo/README.md")
@@ -166,12 +166,12 @@ def test_update_chart_debug_mode():
     GitHubManager.REPO = MagicMock()
     GitHubManager._REMOTE_NAME = "testuser/testuser"
 
-    with patch("manager_github.EM") as mock_em:
+    with patch("sources.manager_github.EM") as mock_em:
         mock_em.DEBUG_RUN = True
         mock_em.PUSH_BRANCH_NAME = ""
 
         with patch("builtins.open", mock_open(read_data=b"fake_png_data")):
-            with patch("manager_github.DBM"):
+            with patch("sources.manager_github.DBM"):
                 result = GitHubManager.update_chart("Test Chart", "test.png")
 
                 assert "base64" in result
@@ -186,16 +186,16 @@ def test_update_chart_normal_mode():
     GitHubManager.REPO = mock_repo
     GitHubManager._REMOTE_NAME = "testuser/testuser"
 
-    with patch("manager_github.EM") as mock_em:
+    with patch("sources.manager_github.EM") as mock_em:
         mock_em.DEBUG_RUN = False
         mock_em.PUSH_BRANCH_NAME = ""
 
-        with patch("manager_github.rmtree"):
-            with patch("manager_github.copy") as mock_copy:
-                with patch("manager_github.makedirs"):
+        with patch("sources.manager_github.rmtree"):
+            with patch("sources.manager_github.copy") as mock_copy:
+                with patch("sources.manager_github.makedirs"):
                     mock_repo.git.add = MagicMock()
 
-                    with patch("manager_github.DBM"):
+                    with patch("sources.manager_github.DBM"):
                         result = GitHubManager.update_chart("Test Chart", "test.png")
 
                         assert "raw.githubusercontent.com" in result
@@ -209,12 +209,12 @@ def test_commit_update():
     mock_repo.remotes.origin.push = MagicMock(return_value=[MagicMock()])
     GitHubManager.REPO = mock_repo
 
-    with patch("manager_github.EM") as mock_em:
+    with patch("sources.manager_github.EM") as mock_em:
         mock_em.COMMIT_MESSAGE = "Test commit"
         mock_em.COMMIT_SINGLE = False
         mock_em.PUSH_BRANCH_NAME = ""
 
-        with patch("manager_github.DBM"):
+        with patch("sources.manager_github.DBM"):
             GitHubManager.commit_update()
 
             mock_repo.index.commit.assert_called_once()
@@ -223,9 +223,9 @@ def test_commit_update():
 
 def test_set_github_output_with_env():
     """Test set_github_output with GITHUB_OUTPUT set"""
-    with patch.dict("manager_github.environ", {"GITHUB_OUTPUT": "/tmp/output.txt"}):
-        with patch("manager_github.FM") as mock_fm:
-            with patch("manager_github.DBM") as mock_dbm:
+    with patch.dict("sources.manager_github.environ", {"GITHUB_OUTPUT": "/tmp/output.txt"}):
+        with patch("sources.manager_github.FM") as mock_fm:
+            with patch("sources.manager_github.DBM") as mock_dbm:
                 GitHubManager.set_github_output("Test stats")
 
                 mock_fm.write_file.assert_called_once()
@@ -237,7 +237,7 @@ def test_set_github_output_without_env():
     if "GITHUB_OUTPUT" in os.environ:
         del os.environ["GITHUB_OUTPUT"]
 
-    with patch("manager_github.DBM") as mock_dbm:
+    with patch("sources.manager_github.DBM") as mock_dbm:
         GitHubManager.set_github_output("Test stats")
 
         mock_dbm.p.assert_called_once()

@@ -9,7 +9,7 @@ import pytest
 os.environ["INPUT_GH_TOKEN"] = "mock_gh_token"
 os.environ["INPUT_WAKATIME_API_KEY"] = "mock_wakatime_key"
 
-from manager_file import FileManager, init_localization_manager  # noqa: E402
+from .manager_file import FileManager, init_localization_manager  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -62,7 +62,7 @@ def test_write_file_with_assets(tmp_path):
     assets_dir = tmp_path / "assets"
     assets_dir.mkdir()
 
-    with patch("manager_file.FileManager.ASSETS_DIR", str(assets_dir)):
+    with patch("sources.manager_file.FileManager.ASSETS_DIR", str(assets_dir)):
         FileManager.write_file("test.txt", "Content", assets=True)
         assert (assets_dir / "test.txt").exists()
         assert (assets_dir / "test.txt").read_text(encoding="utf-8") == "Content"
@@ -107,7 +107,7 @@ def test_cache_binary_with_assets(tmp_path):
     assets_dir = tmp_path / "assets"
     assets_dir.mkdir()
 
-    with patch("manager_file.FileManager.ASSETS_DIR", str(assets_dir)):
+    with patch("sources.manager_file.FileManager.ASSETS_DIR", str(assets_dir)):
         test_data = {"key": "value"}
         FileManager.cache_binary("cache.pick", test_data, assets=True)
         assert (assets_dir / "cache.pick").exists()
@@ -131,7 +131,7 @@ def test_init_localization_manager():
     mock_translation = {"en": {"test": "test"}}
 
     with patch("builtins.open", mock_open(read_data=json.dumps(mock_translation))):
-        with patch("manager_file.EM") as mock_em:
+        with patch("sources.manager_file.EM") as mock_em:
             mock_em.LOCALE = "en"
             init_localization_manager()
             assert FileManager._LOCALIZATION is not None

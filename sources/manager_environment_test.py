@@ -1,5 +1,5 @@
 import pytest
-from manager_environment import EnvironmentManager
+from .manager_environment import EnvironmentManager
 
 
 @pytest.fixture
