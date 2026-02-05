@@ -15,6 +15,7 @@ from .manager_github import GitHubManager as GHM
 # Cache directory for repo data
 CACHE_DIR = ".repo_cache"
 CACHE_INDEX_FILE = f"{CACHE_DIR}/index.json"
+CHECKPOINT_FILE = f"{CACHE_DIR}/checkpoint.json"
 
 
 def get_repo_cache_path(repo_name: str) -> str:
@@ -38,6 +39,35 @@ def save_cache_index(index: Dict) -> None:
     makedirs(CACHE_DIR, exist_ok=True)
     with open(CACHE_INDEX_FILE, "w") as f:
         f.write(dumps(index, indent=2))
+
+
+def get_checkpoint() -> Dict:
+    """Load checkpoint to track processed repos for resumable runs."""
+    if isfile(CHECKPOINT_FILE):
+        try:
+            with open(CHECKPOINT_FILE, "r") as f:
+                return loads(f.read())
+        except Exception:
+            return {"processed_repos": [], "completed_at": None}
+    return {"processed_repos": [], "completed_at": None}
+
+
+def save_checkpoint(processed_repos: list, completed: bool = False) -> None:
+    """Save checkpoint after processing each repo."""
+    checkpoint = {
+        "processed_repos": processed_repos,
+        "completed_at": datetime.now().isoformat() if completed else None,
+    }
+    makedirs(CACHE_DIR, exist_ok=True)
+    with open(CHECKPOINT_FILE, "w") as f:
+        f.write(dumps(checkpoint, indent=2))
+
+
+def clear_checkpoint() -> None:
+    """Clear checkpoint when run completes successfully."""
+    if isfile(CHECKPOINT_FILE):
+        with open(CHECKPOINT_FILE, "w") as f:
+            f.write(dumps({"processed_repos": [], "completed_at": None}, indent=2))
 
 
 def get_cached_repo_data(repo_name: str) -> Optional[Dict]:
@@ -64,15 +94,16 @@ def save_repo_to_cache(repo_name: str, data: Dict, index: Dict) -> None:
 
 async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
     """
-    Calculate commit data by years with smart caching.
+    Calculate commit data by years with smart caching and checkpoint/resume support.
     Only fetches repos that have been updated since last run.
+    Supports resuming from previous partial runs via checkpoint file.
 
     Commit data includes contribution additions and deletions in each quarter of each recorded year.
 
     :param repositories: user repositories info dictionary.
     :returns: Commit quarter yearly data dictionary.
     """
-    DBM.i("Calculating commit data with smart caching...")
+    DBM.i("Calculating commit data with smart caching and checkpoint support...")
 
     # Check if we should use cache
     use_cache = getenv("INPUT_USE_CACHE", "true").lower() == "true"
@@ -83,6 +114,8 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
 
     if use_cache:
         cache_index = get_cache_index()
+        checkpoint = get_checkpoint()
+        processed_repos = checkpoint.get("processed_repos", [])
         cutoff_date = datetime.now() - timedelta(days=cache_ttl_days)
 
         repos_to_fetch = []
@@ -91,6 +124,12 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
         for repo in repositories:
             repo_name = repo["name"]
             if repo_name in EM.IGNORED_REPOS:
+                continue
+
+            # Resume from checkpoint: skip repos already processed in previous run
+            if processed_repos and repo_name in processed_repos:
+                DBM.i(f"Resuming: {repo_name} was processed in previous run, loading from cache")
+                repos_to_load.append(repo)
                 continue
 
             last_cached_str = cache_index.get(repo_name)
@@ -111,19 +150,24 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
                     repos_to_fetch.append(repo)
 
         DBM.i(f"Cache strategy: {len(repos_to_fetch)} repos to fetch, {len(repos_to_load)} from cache")
+        if processed_repos:
+            DBM.i(f"Checkpoint resume: skipping {len(processed_repos)} already processed repos")
 
-        # Process repos that need fetching in parallel
+        # Process repos that need fetching in parallel (with checkpoint support)
         if repos_to_fetch:
-            await fetch_and_process_repos(repos_to_fetch, yearly_data, date_data, cache_index)
+            await fetch_and_process_repos(repos_to_fetch, yearly_data, date_data, cache_index, processed_repos)
 
         # Load cached data for unchanged repos
         for repo in repos_to_load:
             await load_cached_repo_data(repo, yearly_data, date_data)
+
+        # Clear checkpoint on successful completion
+        clear_checkpoint()
     else:
         # No caching, fetch all repos
         DBM.i("Cache disabled, fetching all repositories...")
         cache_index = {}
-        await fetch_and_process_repos(repositories, yearly_data, date_data, cache_index)
+        await fetch_and_process_repos(repositories, yearly_data, date_data, cache_index, [])
 
     DBM.g("Commit data calculated!")
 
@@ -135,8 +179,8 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
     return yearly_data, date_data
 
 
-async def fetch_and_process_repos(repositories: Dict, yearly_data: Dict, date_data: Dict, cache_index: Dict) -> None:
-    """Fetch and process repositories in parallel with semaphore control."""
+async def fetch_and_process_repos(repositories: Dict, yearly_data: Dict, date_data: Dict, cache_index: Dict, processed_repos: list) -> None:
+    """Fetch and process repositories in parallel with semaphore control and checkpoint support."""
     # Determine concurrency
     configured = getenv("INPUT_MAX_CONCURRENCY", "")
     try:
@@ -156,6 +200,10 @@ async def fetch_and_process_repos(repositories: Dict, yearly_data: Dict, date_da
         DBM.i(f"\t{index + 1}/{len(repositories)} Fetching repo: {repo_name}")
         async with sem:
             await update_data_with_commit_stats_and_cache(repo, yearly_data, date_data, cache_index)
+        # Save checkpoint after each repo for resumable runs
+        if repo["name"] not in processed_repos:
+            processed_repos.append(repo["name"])
+            save_checkpoint(processed_repos)
 
     tasks = [process_one(ind, repo) for ind, repo in enumerate(repositories)]
     DBM.i(f"Fetching {len(repositories)} repositories...")

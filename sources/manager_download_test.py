@@ -221,7 +221,7 @@ async def test_fetch_graphql_query_success(mock_client):
     mock_client.post.return_value = AsyncMock(status_code=200, json=lambda: test_data)
 
     # Act
-    result = await DownloadManager._fetch_graphql_query(
+    result = await DownloadManager.fetch_graphql_query(
         "repo_branch_list",
         owner="test_owner",
         name="test_repo",
@@ -250,7 +250,7 @@ async def test_fetch_graphql_paginated(mock_client):
     mock_client.post.return_value = AsyncMock(status_code=200, json=lambda: first_page)
 
     # Act
-    result = await DownloadManager._fetch_graphql_paginated("repo_branch_list", owner="test_owner", name="test_repo")
+    result = await DownloadManager.fetch_graphql_paginated("repo_branch_list", owner="test_owner", name="test_repo")
 
     # Assert
     assert len(result) == 1
@@ -321,21 +321,21 @@ def test_find_pagination_and_data_list():
             }
         }
     }
-    nodes, page_info = DownloadManager._find_pagination_and_data_list(nested_response)
+    nodes, page_info = DownloadManager.find_pagination_and_data_list(nested_response)
     assert len(nodes) == 1
     assert nodes[0]["name"] == "repo1"
     assert page_info["hasNextPage"] is False
 
     # Test direct structure
     direct_response = {"nodes": [{"name": "repo2"}], "pageInfo": {"hasNextPage": True}}
-    nodes, page_info = DownloadManager._find_pagination_and_data_list(direct_response)
+    nodes, page_info = DownloadManager.find_pagination_and_data_list(direct_response)
     assert len(nodes) == 1
     assert nodes[0]["name"] == "repo2"
     assert page_info["hasNextPage"] is True
 
     # Test invalid structure
     invalid_response = {"key": "value"}
-    nodes, page_info = DownloadManager._find_pagination_and_data_list(invalid_response)
+    nodes, page_info = DownloadManager.find_pagination_and_data_list(invalid_response)
     assert len(nodes) == 0
     assert page_info["hasNextPage"] is False
 
@@ -351,7 +351,7 @@ async def test_retry_on_502_error(mock_client):
     mock_client.post.side_effect = [mock_502_response, mock_success_response]
 
     # Act
-    result = await DownloadManager._fetch_graphql_query(
+    result = await DownloadManager.fetch_graphql_query(
         "repo_branch_list",
         retries_count=1,
         owner="test_owner",
