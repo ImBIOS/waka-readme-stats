@@ -25,4 +25,7 @@ COPY sources/ ./sources/
 RUN git config --global user.name "readme-bot" && \
   git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-ENTRYPOINT ["python3", "/waka-readme-stats/sources/main.py"]
+# Add sources to PYTHONPATH for relative imports
+ENV PYTHONPATH=/waka-readme-stats
+
+ENTRYPOINT ["python3", "-m", "sources.main"]
