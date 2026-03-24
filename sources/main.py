@@ -7,23 +7,23 @@ from datetime import datetime
 from typing import Dict
 from urllib.parse import quote
 
-from graphics_chart_drawer import GRAPH_PATH, create_loc_graph
-from graphics_list_formatter import (
+from .graphics_chart_drawer import GRAPH_PATH, create_loc_graph
+from .graphics_list_formatter import (
     make_commit_day_time_list,
     make_language_per_repo_list,
     make_list,
 )
 from humanize import intcomma, intword, naturalsize
-from manager_debug import DebugManager as DBM
-from manager_debug import init_debug_manager
-from manager_download import DownloadManager as DM
-from manager_download import init_download_manager
-from manager_environment import EnvironmentManager as EM
-from manager_file import FileManager as FM
-from manager_file import init_localization_manager
-from manager_github import GitHubManager as GHM
-from manager_github import init_github_manager
-from yearly_commit_calculator import calculate_commit_data
+from .manager_debug import DebugManager as DBM
+from .manager_debug import init_debug_manager
+from .manager_download import DownloadManager as DM
+from .manager_download import init_download_manager
+from .manager_environment import EnvironmentManager as EM
+from .manager_file import FileManager as FM
+from .manager_file import init_localization_manager
+from .manager_github import GitHubManager as GHM
+from .manager_github import init_github_manager
+from .yearly_commit_calculator import calculate_commit_data
 
 
 async def get_waka_time_stats(repositories: Dict, commit_dates: Dict) -> str:

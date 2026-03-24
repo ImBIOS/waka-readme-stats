@@ -171,6 +171,15 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
 
     DBM.g("Commit data calculated!")
 
+    # Debug logging to help diagnose empty data
+    if not yearly_data:
+        DBM.w("yearly_data is empty! Possible reasons:")
+        DBM.w("  - No repositories found")
+        DBM.w("  - All repos in IGNORED_REPOS")
+        DBM.w("  - GitHub token missing 'repo' permission")
+        DBM.w("  - GraphQL API rate limiting")
+        DBM.w(f"  - Total repos processed: {len(repositories)}")
+
     if EM.DEBUG_RUN:
         FM.cache_binary("commits_data.pick", [yearly_data, date_data], assets=True)
         FM.write_file("commits_data.json", dumps([yearly_data, date_data]), assets=True)

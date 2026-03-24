@@ -3,6 +3,7 @@ from typing import Dict
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+from .manager_debug import DebugManager as DBM
 from .manager_download import DownloadManager as DM
 from .manager_file import FileManager as FM
 from numpy import add, amax, arange, array, zeros
@@ -19,13 +20,27 @@ async def create_loc_graph(yearly_data: Dict, save_path: str):
     :param yearly_data: GitHub user yearly data.
     :param save_path: Path to save the graph file.
     """
-    # Handle empty data case
+    # Handle empty data case - create a placeholder with message
     if not yearly_data:
-        fig = plt.figure()
-        ax = fig.add_axes([0, 0, 1.5, 1])
-        ax.set_ylabel("LOC added", fontdict=dict(weight="bold"))
+        DBM.w("No yearly data available for LOC chart - creating placeholder")
+        fig = plt.figure(figsize=(10, 4))
+        ax = fig.add_subplot(111)
+        ax.set_ylabel("LOC added", fontdict=dict(weight="bold"), fontsize=12)
+        ax.text(
+            0.5,
+            0.5,
+            "No data available\nCheck GitHub token permissions",
+            ha="center",
+            va="center",
+            fontsize=14,
+            style="italic",
+            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
+        )
+        ax.set_xlim(0, 1)
+        ax.set_ylim(0, 1)
+        ax.axis("off")
         makedirs(FM.ASSETS_DIR, exist_ok=True)
-        plt.savefig(save_path, bbox_inches="tight")
+        plt.savefig(save_path, bbox_inches="tight", dpi=100)
         plt.close(fig)
         return
 
@@ -51,6 +66,25 @@ async def create_loc_graph(yearly_data: Dict, save_path: str):
 
     fig = plt.figure()
     ax = fig.add_axes([0, 0, 1.5, 1])
+
+    # Check if we actually have any language data to plot
+    if not languages_all_loc:
+        DBM.w("No language data found in yearly_data - repos may lack primaryLanguage")
+        ax.set_ylabel("LOC added", fontdict=dict(weight="bold"), fontsize=12)
+        ax.text(
+            0.5,
+            0.5,
+            "No language data available\nRepos may not have primaryLanguage set",
+            ha="center",
+            va="center",
+            fontsize=12,
+            style="italic",
+            bbox=dict(boxstyle="round", facecolor="lightblue", alpha=0.5),
+        )
+        makedirs(FM.ASSETS_DIR, exist_ok=True)
+        plt.savefig(save_path, bbox_inches="tight", dpi=100)
+        plt.close(fig)
+        return
 
     language_handles = []
     cumulative = zeros((years, 4, 2), dtype=int)

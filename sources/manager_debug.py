@@ -70,20 +70,28 @@ class DebugManager:
 
     @staticmethod
     def g(message: str, **kwargs):
+        if not hasattr(DebugManager, "_logger"):
+            return
         message = DebugManager._process_template(message, kwargs)
         DebugManager._logger.info(f"{DebugManager._COLOR_GREEN}{message}{DebugManager._COLOR_RESET}{DebugManager._timing_suffix()}")
 
     @staticmethod
     def i(message: str, **kwargs):
+        if not hasattr(DebugManager, "_logger"):
+            return
         message = DebugManager._process_template(message, kwargs)
         DebugManager._logger.debug(f"{DebugManager._COLOR_BLUE}{message}{DebugManager._COLOR_RESET}{DebugManager._timing_suffix()}")
 
     @staticmethod
     def w(message: str, **kwargs):
+        if not hasattr(DebugManager, "_logger"):
+            return
         message = DebugManager._process_template(message, kwargs)
         DebugManager._logger.warning(f"{DebugManager._COLOR_YELLOW}{message}{DebugManager._COLOR_RESET}{DebugManager._timing_suffix()}")
 
     @staticmethod
     def p(message: str, **kwargs):
+        if not hasattr(DebugManager, "_logger"):
+            return
         message = DebugManager._process_template(message, kwargs)
         DebugManager._logger.error(f"{message}{DebugManager._timing_suffix()}")
