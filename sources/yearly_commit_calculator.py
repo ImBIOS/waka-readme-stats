@@ -240,10 +240,13 @@ async def load_cached_repo_data(repo: Dict, yearly_data: Dict, date_data: Dict) 
 
 
 def _mask_repo_name(repo_details: Dict) -> str:
-    """Return masked display name for private repos, full name for public."""
     if repo_details.get("isPrivate"):
         return "[private]"
-    return f"{repo_details['owner']['login']}/{repo_details['name']}"
+    owner = repo_details.get("owner", {}).get("login")
+    name = repo_details.get("name", "")
+    if owner:
+        return f"{owner}/{name}"
+    return name
 
 
 async def update_data_with_commit_stats_and_cache(repo_details: Dict, yearly_data: Dict, date_data: Dict, cache_index: Dict) -> None:
