@@ -64,12 +64,17 @@ def init_logger():
 @pytest.mark.asyncio
 async def test_calculate_commit_data_debug_run_with_cache():
     """Test calculate_commit_data in debug mode with cached data"""
-    repositories = [{"name": "test-repo"}]
+    repositories = [{"name": "test-repo", "isPrivate": False, "owner": {"login": "testuser"}}]
 
     mock_cache = (
         {"2023": {1: {"Python": {"add": 100, "del": 50}}}},
         {"test-repo": {"main": {"commit1": "2023-01-15T10:00:00Z"}}},
     )
+
+    cached_repo_data = {
+        "yearly_data": {"2023": {1: {"Python": {"add": 100, "del": 50}}}},
+        "date_data": {"test-repo": {"main": {"commit1": "2023-01-15T10:00:00Z"}}},
+    }
 
     with patch("sources.yearly_commit_calculator.EM") as mock_em:
         mock_em.DEBUG_RUN = True
@@ -79,15 +84,18 @@ async def test_calculate_commit_data_debug_run_with_cache():
         mock_em.FETCH_DEFAULT_BRANCH_ONLY = True
         mock_em.MAX_CONCURRENCY = 4
 
-        with patch("sources.yearly_commit_calculator.FM") as mock_fm:
-            mock_fm.cache_binary.return_value = mock_cache
-            mock_fm.t.return_value = "test"
+        with patch("sources.yearly_commit_calculator.get_cache_index", return_value={"test-repo": datetime.now().isoformat()}):
+            with patch("sources.yearly_commit_calculator.get_cached_repo_data", return_value=cached_repo_data):
+                with patch("sources.yearly_commit_calculator.clear_checkpoint"):
+                    with patch("sources.yearly_commit_calculator.FM") as mock_fm:
+                        mock_fm.cache_binary.return_value = mock_cache
+                        mock_fm.t.return_value = "test"
 
-            yearly_data, commit_data = await calculate_commit_data(repositories)
+                        yearly_data, commit_data = await calculate_commit_data(repositories)
 
-            assert yearly_data == mock_cache[0]
-            assert commit_data == mock_cache[1]
-            mock_fm.cache_binary.assert_called_once()
+                        assert yearly_data == mock_cache[0]
+                        assert commit_data == mock_cache[1]
+                        mock_fm.cache_binary.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -115,6 +123,9 @@ async def test_calculate_commit_data_debug_run_no_cache():
     with patch("sources.yearly_commit_calculator.EM") as mock_em:
         mock_em.DEBUG_RUN = True
         mock_em.IGNORED_REPOS = []
+        mock_em.USE_CACHE = False
+        mock_em.FETCH_DEFAULT_BRANCH_ONLY = True
+        mock_em.MAX_CONCURRENCY = 4
 
         with patch("sources.yearly_commit_calculator.DM") as mock_dm:
             mock_dm.get_remote_graphql = AsyncMock(side_effect=[mock_branch_data, mock_commit_data])
@@ -150,6 +161,9 @@ async def test_calculate_commit_data_ignored_repos():
     with patch("sources.yearly_commit_calculator.EM") as mock_em:
         mock_em.DEBUG_RUN = False
         mock_em.IGNORED_REPOS = ["ignored-repo"]
+        mock_em.USE_CACHE = False
+        mock_em.FETCH_DEFAULT_BRANCH_ONLY = True
+        mock_em.MAX_CONCURRENCY = 4
 
         with patch("sources.yearly_commit_calculator.DM") as mock_dm:
             mock_dm.get_remote_graphql = AsyncMock(side_effect=[[], []])  # Empty branch data
@@ -299,6 +313,9 @@ async def test_calculate_commit_data_runs_in_parallel(monkeypatch):
     with patch("sources.yearly_commit_calculator.EM") as mock_em:
         mock_em.DEBUG_RUN = True
         mock_em.IGNORED_REPOS = []
+        mock_em.USE_CACHE = False
+        mock_em.FETCH_DEFAULT_BRANCH_ONLY = True
+        mock_em.MAX_CONCURRENCY = 16
 
         with patch("sources.yearly_commit_calculator.DM") as mock_dm:
             mock_dm.get_remote_graphql = AsyncMock(side_effect=mock_get_remote_graphql)

@@ -232,10 +232,10 @@ async def load_cached_repo_data(repo: Dict, yearly_data: Dict, date_data: Dict) 
                 yearly_data[year][quarter][lang]["add"] += stats.get("add", 0)
                 yearly_data[year][quarter][lang]["del"] += stats.get("del", 0)
 
-    # Copy date_data
     if repo_name not in date_data:
         date_data[repo_name] = {}
-    for branch, commits in cached.get("date_data", {}).items():
+    repo_date = cached.get("date_data", {}).get(repo_name, {})
+    for branch, commits in repo_date.items():
         date_data[repo_name][branch] = commits
 
 
