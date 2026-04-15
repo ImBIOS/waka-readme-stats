@@ -50,6 +50,13 @@ class EnvironmentManager:
     DEBUG_RUN = getenv("DEBUG_RUN", "False").lower() in _TRUTHY
     LOG_LEVEL = getenv("INPUT_LOG_LEVEL", "info").lower()
 
-    # Cache settings
     USE_CACHE = getenv("INPUT_USE_CACHE", "True").lower() in _TRUTHY
-    CACHE_TTL_DAYS = int(getenv("INPUT_CACHE_TTL_DAYS", "7"))
+    CACHE_TTL_DAYS = int(getenv("INPUT_CACHE_TTL_DAYS", "30"))
+
+    FETCH_DEFAULT_BRANCH_ONLY = getenv("INPUT_FETCH_DEFAULT_BRANCH_ONLY", "True").lower() in _TRUTHY
+
+    _raw_concurrency = getenv("INPUT_MAX_CONCURRENCY", "4")
+    try:
+        MAX_CONCURRENCY = max(1, min(int(_raw_concurrency), 16))
+    except ValueError:
+        MAX_CONCURRENCY = 4

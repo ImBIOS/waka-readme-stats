@@ -268,12 +268,13 @@ class DownloadManager:
             return body
         elif res.status_code in (403, 502) and retries_count > 0:
             wait_seconds = 30
-            headers_dict = dict(res.headers)
-            reset_timestamp = headers_dict.get("x-ratelimit-reset")
-            if reset_timestamp:
-                wait_seconds = max(float(reset_timestamp) - time_now(), 5)
-            else:
-                wait_time = 2 ** (10 - retries_count)
+            try:
+                headers_dict = dict(res.headers) if not isinstance(res.headers, dict) else res.headers
+                reset_timestamp = headers_dict.get("x-ratelimit-reset")
+                if reset_timestamp:
+                    wait_seconds = max(float(reset_timestamp) - time_now(), 5)
+            except (TypeError, AttributeError):
+                pass
             DBM.p(f"Query '{query}' returned {res.status_code}. Waiting {wait_seconds:.0f}s...")
             await sleep(wait_seconds)
             return await DownloadManager._do_fetch_graphql_query(query, retries_count - 1, **kwargs)
@@ -342,138 +343,19 @@ class DownloadManager:
         Execute GitHub GraphQL API paginated query.
         Queries 100 new results each time until no more results are left.
         Merges result list into single query, clears pagination-related info.
+        Rate limiting is handled centrally by _do_fetch_graphql_query.
         :param query: Dynamic query identifier.
-        :param use_github_action: Use GitHub actions bot auth token instead of current user.
         :param kwargs: Parameters for substitution of variables in dynamic query.
-        :return: Response JSON dictionary.
+        :return: Merged list of all paginated results.
         """
-        from .manager_debug import DebugManager as DBM
-
-        async def wait_for_rate_limit_reset(error: Dict) -> int:
-            """Wait for rate limit to reset using any available information.
-            Returns the number of seconds to wait."""
-            # Try extensions.rateLimit.resetAt first
-            extensions = error.get("extensions", {})
-            rate_limit_info = extensions.get("rateLimit", {})
-            reset_at = rate_limit_info.get("resetAt")
-
-            if reset_at:
-                try:
-                    reset_time = datetime.fromisoformat(reset_at.replace("Z", "+00:00"))
-                    wait_seconds = max((reset_time - datetime.now()).total_seconds(), 1)
-                    DBM.p(f"Rate limit will reset at {reset_at}. Waiting {wait_seconds:.1f} seconds...")
-                    await sleep(wait_seconds)
-                    return int(wait_seconds)
-                except (ValueError, TypeError):
-                    pass
-
-            # Fallback: try to extract from message (e.g., "try again in 51 seconds")
-            message = error.get("message", "")
-
-            match = regex_search(r"try again in (\d+) seconds", message)
-            if match:
-                wait_seconds = int(match.group(1))
-                DBM.p(f"Rate limit: {message}. Waiting {wait_seconds} seconds...")
-                await sleep(wait_seconds)
-                return wait_seconds
-
-            # Ultimate fallback: wait 60 seconds
-            DBM.p("Rate limit exceeded but no reset time found. Waiting 60 seconds...")
-            await sleep(60)
-            return 60
-
-        async def execute_with_rate_limit_handling(max_retries: int = 20) -> Dict:
-            nonlocal kwargs
-            attempt = 0
-
-            while attempt < max_retries:
-                initial_query_response = await DownloadManager.fetch_graphql_query(query, **kwargs, pagination="first: 100")
-
-                # Check for rate limit errors and handle them
-                if "errors" in initial_query_response:
-                    errors = initial_query_response["errors"]
-                    for error in errors:
-                        if error.get("type") == "RATE_LIMIT" or "rate limit" in error.get("message", "").lower():
-                            DBM.p(f"GitHub GraphQL API rate limit exceeded for query '{query}' (attempt {attempt + 1}/{max_retries})!")
-                            DBM.p(f"Error: {error.get('message', 'No message')}")
-
-                            # Wait for rate limit to reset
-                            wait_time = await wait_for_rate_limit_reset(error)
-
-                            # Exponential backoff for retries
-                            attempt += 1
-                            if attempt < max_retries:
-                                backoff_wait = min(wait_time * attempt, 300)  # Max 5 min backoff
-                                DBM.p(f"Backoff: waiting {backoff_wait} seconds before retry {attempt + 1}/{max_retries}...")
-                                await sleep(backoff_wait)
-                                break  # Break inner for loop to retry the query
-                            else:
-                                raise Exception(f"Rate limit exceeded after {max_retries} attempts: {error.get('message')}")
-                        else:
-                            DBM.p(f"GraphQL query '{query}' returned error: {error}")
-                    else:
-                        # No rate limit error, return the response
-                        return initial_query_response
-                else:
-                    # No errors, return the response
-                    return initial_query_response
-
-            # This should not be reached, but just in case
-            return initial_query_response
-
-        initial_query_response = await execute_with_rate_limit_handling()
+        initial_query_response = await DownloadManager.fetch_graphql_query(query, **kwargs, pagination="first: 100")
 
         page_list, page_info = DownloadManager.find_pagination_and_data_list(initial_query_response)
         while page_info["hasNextPage"]:
             pagination = f'first: 100, after: "{page_info["endCursor"]}"'
-
-            # Retry pagination requests with rate limit handling
-            pagination_attempt = 0
-            pagination_max_retries = 20
-            pagination_success = False
-
-            while pagination_attempt < pagination_max_retries:
-                query_response = await DownloadManager.fetch_graphql_query(query, **kwargs, pagination=pagination)
-
-                # Check for rate limit errors on pagination requests too
-                if "errors" in query_response:
-                    errors = query_response["errors"]
-                    for error in errors:
-                        if error.get("type") == "RATE_LIMIT" or "rate limit" in error.get("message", "").lower():
-                            DBM.p(
-                                f"GitHub GraphQL API rate limit exceeded while fetching next page for '{query}' (attempt {pagination_attempt + 1}/{pagination_max_retries})!"
-                            )
-                            DBM.p(f"Error: {error.get('message', 'No message')}")
-
-                            # Wait for rate limit to reset
-                            wait_time = await wait_for_rate_limit_reset(error)
-
-                            # Exponential backoff for retries
-                            pagination_attempt += 1
-                            if pagination_attempt < pagination_max_retries:
-                                backoff_wait = min(wait_time * pagination_attempt, 300)
-                                DBM.p(f"Backoff: waiting {backoff_wait} seconds before retry {pagination_attempt + 1}/{pagination_max_retries}...")
-                                await sleep(backoff_wait)
-                                break  # Break inner for loop to retry pagination
-                            else:
-                                raise Exception(f"Rate limit exceeded for pagination after {pagination_max_retries} attempts: {error.get('message')}")
-                        else:
-                            DBM.p(f"GraphQL query '{query}' returned error: {error}")
-                    else:
-                        # No rate limit error
-                        pagination_success = True
-                        break
-                else:
-                    # No errors
-                    pagination_success = True
-                    break
-
-            if pagination_success:
-                new_page_list, page_info = DownloadManager.find_pagination_and_data_list(query_response)
-                page_list += new_page_list
-            else:
-                # If we exhausted retries, use what we have
-                break
+            query_response = await DownloadManager.fetch_graphql_query(query, **kwargs, pagination=pagination)
+            new_page_list, page_info = DownloadManager.find_pagination_and_data_list(query_response)
+            page_list += new_page_list
 
         return page_list
 

@@ -1,7 +1,7 @@
 from asyncio import Semaphore, gather, sleep
 from datetime import datetime, timedelta
 from json import dumps, loads
-from os import cpu_count, getenv, makedirs
+from os import makedirs
 from os.path import isfile
 from re import search
 from typing import Dict, Optional, Tuple
@@ -105,18 +105,14 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
     """
     DBM.i("Calculating commit data with smart caching and checkpoint support...")
 
-    # Check if we should use cache
-    use_cache = getenv("INPUT_USE_CACHE", "true").lower() == "true"
-    cache_ttl_days = int(getenv("INPUT_CACHE_TTL_DAYS", "7"))
-
     yearly_data = dict()
     date_data = dict()
 
-    if use_cache:
+    if EM.USE_CACHE:
         cache_index = get_cache_index()
         checkpoint = get_checkpoint()
         processed_repos = checkpoint.get("processed_repos", [])
-        cutoff_date = datetime.now() - timedelta(days=cache_ttl_days)
+        cutoff_date = datetime.now() - timedelta(days=EM.CACHE_TTL_DAYS)
 
         repos_to_fetch = []
         repos_to_load = []
@@ -190,15 +186,7 @@ async def calculate_commit_data(repositories: Dict) -> Tuple[Dict, Dict]:
 
 async def fetch_and_process_repos(repositories: Dict, yearly_data: Dict, date_data: Dict, cache_index: Dict, processed_repos: list) -> None:
     """Fetch and process repositories in parallel with semaphore control and checkpoint support."""
-    # Determine concurrency
-    configured = getenv("INPUT_MAX_CONCURRENCY", "")
-    try:
-        max_concurrency = int(configured) if configured else 0
-    except ValueError:
-        max_concurrency = 0
-    if max_concurrency <= 0:
-        cores = cpu_count() or 4
-        max_concurrency = max(2, min(cores, 16))
+    max_concurrency = EM.MAX_CONCURRENCY
 
     sem = Semaphore(max_concurrency)
 

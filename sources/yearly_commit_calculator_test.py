@@ -74,6 +74,10 @@ async def test_calculate_commit_data_debug_run_with_cache():
     with patch("sources.yearly_commit_calculator.EM") as mock_em:
         mock_em.DEBUG_RUN = True
         mock_em.IGNORED_REPOS = []
+        mock_em.USE_CACHE = True
+        mock_em.CACHE_TTL_DAYS = 7
+        mock_em.FETCH_DEFAULT_BRANCH_ONLY = True
+        mock_em.MAX_CONCURRENCY = 4
 
         with patch("sources.yearly_commit_calculator.FM") as mock_fm:
             mock_fm.cache_binary.return_value = mock_cache

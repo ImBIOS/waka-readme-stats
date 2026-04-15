@@ -152,6 +152,26 @@ inputs:
     description: "Logging level: info (default), debug, trace"
     default: "info"
 
+  FETCH_DEFAULT_BRANCH_ONLY:
+    required: false
+    description: "Only fetch commits from the default branch of each repo instead of all branches. Dramatically reduces API calls and runtime."
+    default: "True"
+
+  MAX_CONCURRENCY:
+    required: false
+    description: "Max number of concurrent repo fetch operations. Lower values reduce rate limit risk."
+    default: "4"
+
+  USE_CACHE:
+    required: false
+    description: "Enable caching of repo commit data between runs. Requires actions/cache in your workflow."
+    default: "True"
+
+  CACHE_TTL_DAYS:
+    required: false
+    description: "Number of days before cached repo data is considered stale and refetched."
+    default: "30"
+
 runs:
   using: "docker"
   image: "docker://imbios/waka-readme-stats:master"
