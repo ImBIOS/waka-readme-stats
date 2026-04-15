@@ -251,6 +251,13 @@ async def load_cached_repo_data(repo: Dict, yearly_data: Dict, date_data: Dict) 
         date_data[repo_name][branch] = commits
 
 
+def _mask_repo_name(repo_details: Dict) -> str:
+    """Return masked display name for private repos, full name for public."""
+    if repo_details.get("isPrivate"):
+        return "[private]"
+    return f"{repo_details['owner']['login']}/{repo_details['name']}"
+
+
 async def update_data_with_commit_stats_and_cache(repo_details: Dict, yearly_data: Dict, date_data: Dict, cache_index: Dict) -> None:
     """
     Updates yearly commit data with commits from given repository.
@@ -264,18 +271,26 @@ async def update_data_with_commit_stats_and_cache(repo_details: Dict, yearly_dat
     """
     owner = repo_details["owner"]["login"]
     repo_name = repo_details["name"]
+    display_name = _mask_repo_name(repo_details)
 
-    branch_data = await DM.get_remote_graphql("repo_branch_list", owner=owner, name=repo_name)
+    if EM.FETCH_DEFAULT_BRANCH_ONLY:
+        default_branch = repo_details.get("defaultBranchRef", {}).get("name") if repo_details.get("defaultBranchRef") else None
+        if default_branch:
+            branch_data = [{"name": default_branch}]
+        else:
+            branch_data = await DM.get_remote_graphql("repo_branch_list", owner=owner, name=repo_name)
+    else:
+        branch_data = await DM.get_remote_graphql("repo_branch_list", owner=owner, name=repo_name)
+
     if len(branch_data) == 0:
-        DBM.w(f"\t\tBranch data not found, skipping {repo_name} repository...")
+        DBM.w(f"\t\tBranch data not found, skipping {display_name} repository...")
         return
 
-    # Local storage for this repo's data
     repo_yearly_data = {}
     repo_date_data = {}
 
     for branch in branch_data:
-        DBM.i(f"\t\tProcessing {repo_name} branch: {branch['name']}")
+        DBM.i(f"\t\tProcessing {display_name} branch: {branch['name']}")
         commit_data = await DM.get_remote_graphql(
             "repo_commit_list",
             owner=owner,
@@ -283,9 +298,8 @@ async def update_data_with_commit_stats_and_cache(repo_details: Dict, yearly_dat
             branch=branch["name"],
             id=GHM.USER.node_id,
         )
-        DBM.i(f"\t\t\tFound {len(commit_data)} commits in {repo_name} branch {branch['name']}")
+        DBM.i(f"\t\t\tFound {len(commit_data)} commits in {display_name} branch {branch['name']}")
 
-        # Initialize branch in date_data
         if repo_name not in repo_date_data:
             repo_date_data[repo_name] = {}
         if branch["name"] not in repo_date_data[repo_name]:
@@ -312,7 +326,6 @@ async def update_data_with_commit_stats_and_cache(repo_details: Dict, yearly_dat
         if not EM.DEBUG_RUN:
             await sleep(0.4)
 
-    # Merge into main data structures
     for year, quarters in repo_yearly_data.items():
         if year not in yearly_data:
             yearly_data[year] = {}
@@ -329,7 +342,6 @@ async def update_data_with_commit_stats_and_cache(repo_details: Dict, yearly_dat
         date_data[repo_name] = {}
     date_data[repo_name].update(repo_date_data.get(repo_name, {}))
 
-    # Save to cache
     cache_data = {
         "yearly_data": repo_yearly_data,
         "date_data": {repo_name: repo_date_data.get(repo_name, {})},
@@ -337,7 +349,7 @@ async def update_data_with_commit_stats_and_cache(repo_details: Dict, yearly_dat
         "language": repo_details.get("primaryLanguage", {}).get("name") if repo_details.get("primaryLanguage") else None,
     }
     save_repo_to_cache(repo_name, cache_data, cache_index)
-    DBM.g(f"\t\tSaved {repo_name} to cache")
+    DBM.g(f"\t\tSaved {display_name} to cache")
 
 
 # Keep original function for backward compatibility
@@ -345,14 +357,15 @@ async def update_data_with_commit_stats(repo_details: Dict, yearly_data: Dict, d
     """Legacy function that updates data without caching."""
     owner = repo_details["owner"]["login"]
     repo_name = repo_details["name"]
+    display_name = _mask_repo_name(repo_details)
 
     branch_data = await DM.get_remote_graphql("repo_branch_list", owner=owner, name=repo_name)
     if len(branch_data) == 0:
-        DBM.w(f"\t\tBranch data not found, skipping {repo_name} repository...")
+        DBM.w(f"\t\tBranch data not found, skipping {display_name} repository...")
         return
 
     for branch in branch_data:
-        DBM.i(f"\t\tProcessing {repo_name} branch: {branch['name']}")
+        DBM.i(f"\t\tProcessing {display_name} branch: {branch['name']}")
         commit_data = await DM.get_remote_graphql(
             "repo_commit_list",
             owner=owner,
@@ -360,7 +373,7 @@ async def update_data_with_commit_stats(repo_details: Dict, yearly_data: Dict, d
             branch=branch["name"],
             id=GHM.USER.node_id,
         )
-        DBM.i(f"\t\t\tFound {len(commit_data)} commits in {repo_name} branch {branch['name']}")
+        DBM.i(f"\t\t\tFound {len(commit_data)} commits in {display_name} branch {branch['name']}")
 
         if repo_name not in date_data:
             date_data[repo_name] = dict()

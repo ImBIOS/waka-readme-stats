@@ -1,5 +1,5 @@
-from asyncio import Task, sleep
-from datetime import datetime
+from asyncio import Event, Semaphore, Task, sleep
+from datetime import datetime, timezone
 from hashlib import md5
 from json import dumps
 from re import search as regex_search
@@ -30,6 +30,9 @@ GITHUB_API_QUERIES = {
                 }
                 isPrivate
                 isFork
+                defaultBranchRef {
+                    name
+                }
             }
             pageInfo {
                 endCursor
@@ -38,8 +41,6 @@ GITHUB_API_QUERIES = {
         }
     }
 }""",
-    # Query to collect info about all repositories user created or collaborated on, including: name, primary language and owner login.
-    # NB! Query doesn't include information about repositories user contributed to via pull requests.
     "user_repository_list": """
 {
     user(login: "$username") {
@@ -53,6 +54,9 @@ GITHUB_API_QUERIES = {
                     login
                 }
                 isPrivate
+                defaultBranchRef {
+                    name
+                }
             }
             pageInfo {
                 endCursor
@@ -146,6 +150,9 @@ class DownloadManager:
 
     _client = AsyncClient(timeout=60.0)
     _REMOTE_RESOURCES_CACHE = dict()
+    _rate_limit_event = Event()
+    _rate_limit_event.set()
+    _global_rate_limit_semaphore: Optional[Semaphore] = None
 
     @staticmethod
     async def load_remote_resources(**resources: str):
@@ -224,10 +231,20 @@ class DownloadManager:
         """
         Execute GitHub GraphQL API simple query.
         :param query: Dynamic query identifier.
-        :param use_github_action: Use GitHub actions bot auth token instead of current user.
+        :param retries_count: Number of retries left.
         :param kwargs: Parameters for substitution of variables in dynamic query.
         :return: Response JSON dictionary.
         """
+        if DownloadManager._global_rate_limit_semaphore:
+            async with DownloadManager._global_rate_limit_semaphore:
+                return await DownloadManager._do_fetch_graphql_query(query, retries_count, **kwargs)
+        else:
+            return await DownloadManager._do_fetch_graphql_query(query, retries_count, **kwargs)
+
+    @staticmethod
+    async def _do_fetch_graphql_query(query: str, retries_count: int = 10, **kwargs) -> Dict:
+        await DownloadManager._rate_limit_event.wait()
+
         headers = {"Authorization": f"Bearer {EM.GH_TOKEN}"}
         res = await DownloadManager._client.post(
             "https://api.github.com/graphql",
@@ -235,27 +252,66 @@ class DownloadManager:
             headers=headers,
         )
 
-        # Handle rate limiting via HTTP headers (403 or 200 with rate limit in body)
         if res.status_code == 200:
-            return res.json()
+            body = res.json()
+            if "errors" in body:
+                for error in body.get("errors", []):
+                    if error.get("type") == "RATE_LIMIT" or "rate limit" in error.get("message", "").lower():
+                        wait_seconds = DownloadManager._parse_rate_limit_wait(error, dict(res.headers))
+                        DBM.p(f"GraphQL rate limit hit for '{query}'. Pausing all queries for {wait_seconds:.0f}s...")
+                        DownloadManager._rate_limit_event.clear()
+                        await sleep(wait_seconds)
+                        DownloadManager._rate_limit_event.set()
+                        if retries_count > 0:
+                            return await DownloadManager._do_fetch_graphql_query(query, retries_count - 1, **kwargs)
+                        raise Exception(f"Rate limit exceeded after all retries: {error.get('message')}")
+            return body
         elif res.status_code in (403, 502) and retries_count > 0:
-            # Check if it's a rate limit error
-            if res.status_code == 403:
-                # GitHub uses 403 for rate limiting
-                headers_dict = dict(res.headers)
-                reset_timestamp = headers_dict.get("x-ratelimit-reset")
-                if reset_timestamp:
-                    wait_seconds = max(float(reset_timestamp) - time_now(), 1)
-                    DBM.p(f"HTTP 403 Rate limit exceeded. Waiting {wait_seconds:.1f} seconds...")
-                    await sleep(wait_seconds)
-                    return await DownloadManager.fetch_graphql_query(query, retries_count - 1, **kwargs)
-            # For 502 or 403 without reset info, use exponential backoff
-            wait_time = 2 ** (10 - retries_count)
-            DBM.p(f"Query '{query}' returned {res.status_code}. Retrying in {wait_time} seconds...")
-            await sleep(wait_time)
-            return await DownloadManager.fetch_graphql_query(query, retries_count - 1, **kwargs)
+            wait_seconds = 30
+            headers_dict = dict(res.headers)
+            reset_timestamp = headers_dict.get("x-ratelimit-reset")
+            if reset_timestamp:
+                wait_seconds = max(float(reset_timestamp) - time_now(), 5)
+            else:
+                wait_time = 2 ** (10 - retries_count)
+            DBM.p(f"Query '{query}' returned {res.status_code}. Waiting {wait_seconds:.0f}s...")
+            await sleep(wait_seconds)
+            return await DownloadManager._do_fetch_graphql_query(query, retries_count - 1, **kwargs)
         else:
             raise Exception(f"Query '{query}' failed to run by returning code of {res.status_code}: {res.json()}")
+
+    @staticmethod
+    def _parse_rate_limit_wait(error: Dict, response_headers: Dict) -> float:
+        """Parse rate limit reset time from error body or HTTP headers."""
+        extensions = error.get("extensions", {})
+        rate_limit_info = extensions.get("rateLimit", {})
+        reset_at = rate_limit_info.get("resetAt")
+
+        if reset_at:
+            try:
+                reset_time = datetime.fromisoformat(reset_at.replace("Z", "+00:00"))
+                wait_seconds = max((reset_time - datetime.now(timezone.utc)).total_seconds(), 5)
+                return wait_seconds
+            except (ValueError, TypeError):
+                pass
+
+        message = error.get("message", "")
+        match = regex_search(r"try again in (\d+) seconds", message)
+        if match:
+            return int(match.group(1)) + 5
+
+        reset_timestamp = response_headers.get("x-ratelimit-reset")
+        if reset_timestamp:
+            try:
+                return max(float(reset_timestamp) - time_now(), 5)
+            except (ValueError, TypeError):
+                pass
+
+        remaining = response_headers.get("x-ratelimit-remaining", "1")
+        if remaining == "0":
+            return 60
+
+        return 60
 
     @staticmethod
     def find_pagination_and_data_list(response: Dict) -> Tuple[List, Dict]:
